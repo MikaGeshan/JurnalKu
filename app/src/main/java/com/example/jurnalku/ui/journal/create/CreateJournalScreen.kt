@@ -49,6 +49,8 @@ fun CreateJournalScreen(onCancelCreateJournal: () -> Unit) {
 
     if (showCanvas) {
         CustomCanvas(
+            paperColor = selectedColor,
+            paperType = selectedType,
             onClose = { showCanvas = false }
         )
         return
@@ -147,12 +149,15 @@ fun CreateJournalScreen(onCancelCreateJournal: () -> Unit) {
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier
                                 .weight(1f)
-                                .clickable { selectedType = type }
+                                .clickable {
+                                    selectedType = type
+                                    showCanvas = true
+                                }
                         ) {
 
                             Box(
                                 modifier = Modifier
-                                    .height(150.dp) // 🔥 lebih panjang
+                                    .height(150.dp)
                                     .fillMaxWidth()
                                     .background(
                                         selectedColor,
@@ -188,12 +193,5 @@ fun CreateJournalScreen(onCancelCreateJournal: () -> Unit) {
 
         Spacer(modifier = Modifier.height(32.dp))
 
-//        Button(
-//            onClick = { showCanvas = true },
-//            modifier = Modifier.fillMaxWidth(),
-//            shape = RoundedCornerShape(12.dp)
-//        ) {
-//            Text("Continue")
-//        }
     }
 }

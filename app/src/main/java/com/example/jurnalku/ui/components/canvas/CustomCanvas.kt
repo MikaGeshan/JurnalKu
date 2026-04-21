@@ -1,5 +1,6 @@
 package com.example.jurnalku.ui.components.canvas
 
+import CanvasPattern
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
@@ -19,13 +20,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.example.jurnalku.ui.theme.White
 import android.util.Log
 
 val defaultColor = Color.Black
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
 fun CustomCanvas(
+    paperColor: Color,
+    paperType: String,
     onClose: () -> Unit
 ) {
     var mode by remember { mutableStateOf(CanvasMode.TEXT) }
@@ -43,8 +45,7 @@ fun CustomCanvas(
         DrawTool.HIGHLIGHTER -> 12f
         DrawTool.ERASER -> 20f
     }
-    val drawColor = if (selectedTool == DrawTool.ERASER) Color.White else selectedColor
-
+    val drawColor = if (selectedTool == DrawTool.ERASER) paperColor else selectedColor
     Column(modifier = Modifier.fillMaxSize() ) {
 
         // header
@@ -68,8 +69,13 @@ fun CustomCanvas(
         // default content
         Box(modifier = Modifier
             .weight(1f)
-            .background(White)
+            .background(paperColor)
         ) {
+
+
+            CanvasPattern(
+                type = paperType
+            )
 
             // text layer
             TextField(
