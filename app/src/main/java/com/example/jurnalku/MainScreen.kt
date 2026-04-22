@@ -79,7 +79,7 @@ fun MainScreen() {
             }
 
             composable("journal_list"){
-                JournalListContainer()
+                JournalListContainer(navController)
             }
 
             composable("create_journal") {

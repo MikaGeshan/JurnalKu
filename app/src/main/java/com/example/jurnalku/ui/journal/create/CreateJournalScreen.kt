@@ -41,7 +41,10 @@ import androidx.compose.ui.graphics.Color
 
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
-fun CreateJournalScreen(onCancelCreateJournal: () -> Unit) {
+fun CreateJournalScreen(
+    onBackToEntries: () -> Unit,
+    onCancelCreateJournal: () -> Unit)
+{
 
     var selectedColor by remember { mutableStateOf(Color.White) }
     var selectedType by remember { mutableStateOf("Blank") }
@@ -51,7 +54,7 @@ fun CreateJournalScreen(onCancelCreateJournal: () -> Unit) {
         CustomCanvas(
             paperColor = selectedColor,
             paperType = selectedType,
-            onClose = { showCanvas = false }
+            onClose = onCancelCreateJournal
         )
         return
     }
@@ -84,7 +87,7 @@ fun CreateJournalScreen(onCancelCreateJournal: () -> Unit) {
         ) {
 
             IconButton(
-                onClick = onCancelCreateJournal,
+                onClick = onBackToEntries,
                 modifier = Modifier.align(Alignment.CenterStart)
             ) {
                 Text("X", fontWeight = FontWeight.Bold)
