@@ -4,10 +4,6 @@ import android.util.Log
 import androidx.compose.runtime.*
 import com.google.firebase.auth.FirebaseAuth
 
-data class RegisterPayload(
-    val email: String,
-    val password: String
-)
 
 @Composable
 fun RegisterContainer(
