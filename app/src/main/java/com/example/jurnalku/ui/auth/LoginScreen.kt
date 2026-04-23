@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,13 +18,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.example.jurnalku.ui.components.CustomButton
+import com.example.jurnalku.ui.components.CustomLoadingSpinner
 import com.example.jurnalku.ui.components.TextInput
 import com.example.jurnalku.ui.theme.JungleGreen
+import com.example.jurnalku.ui.theme.White
 
 @Composable
 fun LoginScreen(
     email: String,
     password: String,
+    isLoading: Boolean,
+    errorMessage: String?,
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onLoginClick: () -> Unit,
@@ -62,12 +67,31 @@ fun LoginScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
+        if (errorMessage != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = errorMessage,
+                color = androidx.compose.ui.graphics.Color.Red,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+
         Spacer(modifier = Modifier.height(36.dp))
 
         CustomButton(
-            text = "LOGIN",
-            onClick = onLoginClick
-        )
+            text = if (isLoading) "" else "LOGIN",
+            onClick = onLoginClick,
+        ) {
+            if (isLoading) {
+                CustomLoadingSpinner(
+                    modifier = Modifier.size(20.dp),
+                    color = White
+                )
+            }
+        }
+
+
 
         Spacer(modifier = Modifier.height(34.dp))
 
@@ -82,7 +106,14 @@ fun LoginScreen(
         CustomButton(
             text = "Google",
             onClick = onGoogleLoginClick
-        )
+        ) {
+            if (isLoading) {
+                CustomLoadingSpinner(
+                    modifier = Modifier.size(20.dp),
+                    color = White
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(55.dp))
 

@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1000096628873",
+    "project_id": "jurnalku-2add5",
+    "storage_bucket": "jurnalku-2add5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1000096628873:android:aa3d7ca5921d1b0fa34658",
+        "android_client_info": {
+          "package_name": "com.example.jurnalku"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1000096628873-1f60ciot4rdui3rei43a3oagf9k3btoi.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.jurnalku",
+            "certificate_hash": "b8f5edfa5ff130b5308cadd9badd59115e2bbf86"
+          }
+        },
+        {
+          "client_id": "1000096628873-0nno7q2bfi1uuj7f6nvs1kkrej33i58i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA-mT_EsZuaWlqFI9dhrk-4qT8HiThDlh8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1000096628873-0nno7q2bfi1uuj7f6nvs1kkrej33i58i.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
