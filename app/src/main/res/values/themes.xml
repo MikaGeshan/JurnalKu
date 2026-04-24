@@ -2,4 +2,11 @@
 <resources>
 
     <style name="Theme.JurnalKu" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.JurnalKu.Splash" parent="Theme.JurnalKu">
+        <item name="android:windowBackground">@drawable/splash_bg</item>
+    </style>
+
+    <style name="Theme.JurnalKu.Main" parent="Theme.JurnalKu" />
+
 </resources>

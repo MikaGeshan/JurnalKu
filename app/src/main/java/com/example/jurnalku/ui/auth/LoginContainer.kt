@@ -6,6 +6,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.jurnalku.ui.stores.AuthStore
 import com.google.firebase.auth.FirebaseAuth
 
 data class LoginPayload(
@@ -24,9 +26,10 @@ fun LoginContainer(
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val auth = remember { FirebaseAuth.getInstance() }
+    val authStore: AuthStore = viewModel()
 
     fun handleLogin() {
-        if (isLoading) return;
+        if (isLoading) return
 
         if (email.isBlank() || password.isBlank()) {
             errorMessage = "Email & password wajib diisi"
@@ -43,6 +46,8 @@ fun LoginContainer(
                 if (task.isSuccessful) {
                     val user = auth.currentUser
                     Log.d("LOGIN_SUCCESS", "uid=${user?.uid}")
+
+                    authStore.refreshUser()
                     onLoginSuccess()
                 } else {
                     errorMessage = task.exception?.message ?: "Login gagal"

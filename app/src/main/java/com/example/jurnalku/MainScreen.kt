@@ -12,6 +12,7 @@ import com.example.jurnalku.ui.dateline.DatelineContainer
 import com.example.jurnalku.ui.entries.EntriesContainer
 import com.example.jurnalku.ui.journal.create.CreateJournalContainer
 import com.example.jurnalku.ui.journal.list.JournalListContainer
+import com.example.jurnalku.ui.splash.SplashContainer
 import com.example.jurnalku.ui.theme.SoftGreen
 
 @Composable
@@ -43,9 +44,24 @@ fun MainScreen() {
 
         NavHost(
             navController = navController,
-            startDestination = "login",
+            startDestination = "splash",
             modifier = Modifier.padding(padding)
         ) {
+
+            composable("splash") {
+                SplashContainer(
+                    onNavigateToEntries = {
+                        navController.navigate("entries") {
+                            popUpTo("splash") { inclusive = true }
+                        }
+                    },
+                    onNavigateToLogin = {
+                        navController.navigate("login") {
+                            popUpTo("splash") { inclusive = true }
+                        }
+                    }
+                )
+            }
 
             composable("login") {
                 LoginContainer(
