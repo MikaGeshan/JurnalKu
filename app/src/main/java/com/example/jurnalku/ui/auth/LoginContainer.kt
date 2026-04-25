@@ -86,7 +86,8 @@ fun LoginContainer(
                 val idToken = account.idToken
 
                 if (idToken == null) {
-                    errorMessage = "ID Token null"
+                    Log.e("GOOGLE_LOGIN", "ID Token NULL")
+                    errorMessage = "Google login gagal (config error)"
                     return@rememberLauncherForActivityResult
                 }
 

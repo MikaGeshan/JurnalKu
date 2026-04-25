@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "1000096628873-1f60ciot4rdui3rei43a3oagf9k3btoi.apps.googleusercontent.com",
+          "client_id": "1000096628873-0e2vcb0rbtr0frghqmu950d31e3tgedv.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.example.jurnalku",
-            "certificate_hash": "b8f5edfa5ff130b5308cadd9badd59115e2bbf86"
+            "certificate_hash": "d0d5884a925408bdb9282d8c7953599d2c48a0fe"
           }
         },
         {
