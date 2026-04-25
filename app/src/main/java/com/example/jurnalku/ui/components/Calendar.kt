@@ -22,6 +22,16 @@ import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.*
 
+val moodMap = mapOf(
+    LocalDate.of(2026, 4, 1) to "😄",
+    LocalDate.of(2026, 4, 2) to "🙂",
+    LocalDate.of(2026, 4, 3) to "😐",
+    LocalDate.of(2026, 4, 4) to "😟",
+    LocalDate.of(2026, 4, 5) to "😫",
+    LocalDate.of(2026, 4, 10) to "😄",
+    LocalDate.of(2026, 4, 15) to "🙂"
+)
+
 @Composable
 fun Calendar(
     selectedDate: LocalDate,
@@ -112,6 +122,7 @@ fun Calendar(
                             } else {
 
                                 val date = currentMonth.atDay(day)
+                                val mood = moodMap[date]
 
                                 val isToday = date == today
                                 val isSelected = date == selectedDate
@@ -132,13 +143,29 @@ fun Calendar(
                                         },
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text(
-                                        text = day.toString(),
-                                        color = when {
-                                            isSelected -> Color.White
-                                            else -> MaterialTheme.colorScheme.onBackground
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+
+                                        // mood history
+                                        if (mood != null) {
+                                            Text(
+                                                text = mood,
+                                                style = MaterialTheme.typography.bodySmall
+                                            )
                                         }
-                                    )
+
+                                        // tanggal
+                                        Text(
+                                            text = day.toString(),
+                                            color = when {
+                                                isSelected -> Color.White
+                                                else -> MaterialTheme.colorScheme.onBackground
+                                            },
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                    }
                                 }
 
                                 day++

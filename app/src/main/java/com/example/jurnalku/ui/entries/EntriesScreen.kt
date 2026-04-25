@@ -20,7 +20,8 @@ import com.example.jurnalku.ui.theme.JungleGreen
 fun EntriesScreen(
     selectedMood: MoodClass?,
     onMoodSelected: (MoodClass) -> Unit,
-    onNavigateCreateJournal: () -> Unit
+    onNavigateCreateJournal: () -> Unit,
+    onLogOut: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -66,7 +67,7 @@ fun EntriesScreen(
 
                 Spacer(modifier = Modifier.width(4.dp))
 
-                IconButton(onClick = { }) {
+                IconButton(onClick = {onLogOut() }) {
                     ComposableIcon(
                         icon = AppIconClass.Profile,
                         tint = JungleGreen,

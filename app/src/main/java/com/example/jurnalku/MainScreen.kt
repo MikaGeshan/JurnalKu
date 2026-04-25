@@ -87,7 +87,14 @@ fun MainScreen() {
             }
 
             composable("entries") {
-                EntriesContainer(navController)
+                EntriesContainer(
+                    navController = navController,
+                    onNavigateToLogin = {
+                        navController.navigate("login") {
+                            popUpTo(0)
+                        }
+                    }
+                )
             }
 
             composable("dateline") {
