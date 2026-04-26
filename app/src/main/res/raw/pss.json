@@ -1,0 +1,54 @@
+{
+  "title": "Perceived Stress Scale (PSS-4)",
+  "description": "Dalam 1 bulan terakhir, seberapa sering Anda merasakan hal berikut?",
+  "scale": {
+    "type": "likert",
+    "options": [
+      { "label": "Tidak Pernah", "value": 0 },
+      { "label": "Hampir Tidak Pernah", "value": 1 },
+      { "label": "Kadang-kadang", "value": 2 },
+      { "label": "Cukup Sering", "value": 3 },
+      { "label": "Sangat Sering", "value": 4 }
+    ]
+  },
+  "questions": [
+    {
+      "id": 1,
+      "text": "Seberapa sering Anda merasa tidak mampu mengendalikan hal-hal penting dalam hidup Anda?",
+      "reverse_scored": false
+    },
+    {
+      "id": 2,
+      "text": "Seberapa sering Anda merasa yakin dengan kemampuan Anda dalam menangani masalah pribadi?",
+      "reverse_scored": true
+    },
+    {
+      "id": 3,
+      "text": "Seberapa sering Anda merasa segala sesuatu berjalan sesuai keinginan Anda?",
+      "reverse_scored": true
+    },
+    {
+      "id": 4,
+      "text": "Seberapa sering Anda merasa kesulitan yang Anda hadapi menumpuk hingga Anda tidak dapat mengatasinya?",
+      "reverse_scored": false
+    }
+  ],
+  "scoring": {
+    "min_score": 0,
+    "max_score": 16,
+    "interpretation": [
+      {
+        "range": [0, 5],
+        "label": "Stres Rendah"
+      },
+      {
+        "range": [6, 11],
+        "label": "Stres Sedang"
+      },
+      {
+        "range": [12, 16],
+        "label": "Stres Tinggi"
+      }
+    ]
+  }
+}

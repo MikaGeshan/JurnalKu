@@ -15,6 +15,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.jurnalku.ui.components.Calendar
+import com.example.jurnalku.ui.components.CustomCard
+import com.example.jurnalku.ui.components.pss.PSSForm
 import com.example.jurnalku.ui.theme.Green
 import com.example.jurnalku.ui.theme.Red
 import com.example.jurnalku.ui.theme.Yellow
@@ -50,5 +52,29 @@ fun DatelineScreen() {
                 )
             )
         }
+
+        item {
+            Spacer(modifier = Modifier.height(24.dp))
+
+            CustomCard(title = "Monthly Stress Level") {
+                PSSForm()
+            }
+        }
+
+//        item {
+//            Spacer(modifier = Modifier.height(16.dp))
+//
+//            CustomCard(title = "Insight") {
+//                // kosong dulu
+//            }
+//        }
+
+//        item {
+//            Spacer(modifier = Modifier.height(16.dp))
+//
+//            CustomCard(title = "Notes") {
+//                // kosong dulu
+//            }
+//        }
     }
 }
