@@ -47,7 +47,7 @@ fun LoginScreen(
             Text(
                 text = "JurnalKu",
                 style = MaterialTheme.typography.headlineLarge,
-                color = JungleGreen
+                color = JungleGreen,
             )
 
             Spacer(modifier = Modifier.height(100.dp))
@@ -56,6 +56,7 @@ fun LoginScreen(
                 value = email,
                 onValueChange = onEmailChange,
                 label = "Email",
+                isError = email.isBlank() && errorMessage !== null,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -66,6 +67,7 @@ fun LoginScreen(
                 onValueChange = onPasswordChange,
                 label = "Password",
                 isPassword = true,
+                isError = password.isBlank() && errorMessage !== null,
                 modifier = Modifier.fillMaxWidth()
             )
 

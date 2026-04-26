@@ -35,9 +35,7 @@ fun EntriesContainer(
 
         authStore.logout()
 
-        navController.navigate("login") {
-            popUpTo(0)
-        }
+        onNavigateToLogin()
     }
 
     EntriesScreen(

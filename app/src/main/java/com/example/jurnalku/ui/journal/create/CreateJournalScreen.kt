@@ -20,7 +20,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -77,6 +79,7 @@ fun CreateJournalScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -106,16 +109,19 @@ fun CreateJournalScreen(
         // COLOR PALETTE
         Text("Paper Color", fontWeight = FontWeight.SemiBold)
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier
+            .height(12.dp)
+        )
 
         Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxWidth()
         ) {
             colorOptions.forEach { color ->
                 Box(
                     modifier = Modifier
+                        .padding(horizontal = 6.dp)
                         .size(48.dp)
                         .background(color, RoundedCornerShape(12.dp))
                         .then(

@@ -10,6 +10,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.jurnalku.ui.theme.Grey
+import com.example.jurnalku.ui.theme.Red
 
 @Composable
 fun TextInput(
@@ -17,7 +18,8 @@ fun TextInput(
     onValueChange: (String) -> Unit,
     label: String,
     modifier: Modifier = Modifier,
-    isPassword: Boolean = false
+    isPassword: Boolean = false,
+    isError: Boolean = false
 ) {
     OutlinedTextField(
         value = value,
@@ -39,6 +41,8 @@ fun TextInput(
 
         singleLine = true,
 
+        isError = isError,
+
         visualTransformation = if (isPassword) {
             PasswordVisualTransformation()
         } else {
@@ -49,6 +53,8 @@ fun TextInput(
             focusedBorderColor = Grey,
             unfocusedBorderColor = Grey,
             disabledBorderColor = Grey,
+
+            errorBorderColor = Red,
 
             focusedContainerColor = Grey,
             unfocusedContainerColor = Grey,

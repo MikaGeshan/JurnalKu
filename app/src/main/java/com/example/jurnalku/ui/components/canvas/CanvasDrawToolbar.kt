@@ -43,8 +43,6 @@ fun DrawToolbar(
         Purple
     )
 
-    val defaultColor = colors.first()
-
     Column(
         modifier = Modifier
             .fillMaxWidth()

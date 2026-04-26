@@ -38,7 +38,7 @@ fun LoginContainer(
         if (isLoading) return
 
         if (email.isBlank() || password.isBlank()) {
-            errorMessage = "Email & password wajib diisi"
+            errorMessage = "Email & Password are required"
             return
         }
 
