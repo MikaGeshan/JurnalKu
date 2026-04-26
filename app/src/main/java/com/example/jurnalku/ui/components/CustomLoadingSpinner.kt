@@ -2,8 +2,12 @@ package com.example.jurnalku.ui.components
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
@@ -15,9 +19,9 @@ import com.example.jurnalku.ui.theme.JungleGreen
 @Composable
 fun CustomLoadingSpinner(
     modifier: Modifier = Modifier,
-    color: Color = JungleGreen
+    color: Color = JungleGreen,
+    isOverlay: Boolean = false
 ) {
-
     val infiniteTransition = rememberInfiniteTransition(label = "spinner")
 
     val angle by infiniteTransition.animateFloat(
@@ -29,27 +33,41 @@ fun CustomLoadingSpinner(
         label = "rotation"
     )
 
-    Canvas(
-        modifier = modifier.size(40.dp)
-    ) {
+    val spinner: @Composable () -> Unit = {
+        Canvas(
+            modifier = modifier.size(40.dp)
+        ) {
+            val strokeWidth = 6.dp.toPx()
+            val radius = size.minDimension / 2
 
-        val strokeWidth = 6.dp.toPx()
-        val radius = size.minDimension / 2
+            drawArc(
+                color = color,
+                startAngle = angle,
+                sweepAngle = 270f,
+                useCenter = false,
+                style = Stroke(
+                    width = strokeWidth,
+                    cap = StrokeCap.Round
+                ),
+                topLeft = Offset(
+                    (size.width - radius * 2) / 2,
+                    (size.height - radius * 2) / 2
+                ),
+                size = androidx.compose.ui.geometry.Size(radius * 2, radius * 2)
+            )
+        }
+    }
 
-        drawArc(
-            color = color,
-            startAngle = angle,
-            sweepAngle = 270f,
-            useCenter = false,
-            style = Stroke(
-                width = strokeWidth,
-                cap = StrokeCap.Round
-            ),
-            topLeft = Offset(
-                (size.width - radius * 2) / 2,
-                (size.height - radius * 2) / 2
-            ),
-            size = androidx.compose.ui.geometry.Size(radius * 2, radius * 2)
-        )
+    if (isOverlay) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.3f)),
+            contentAlignment = Alignment.Center
+        ) {
+            spinner()
+        }
+    } else {
+        spinner()
     }
 }

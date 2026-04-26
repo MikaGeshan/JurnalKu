@@ -2,6 +2,7 @@ package com.example.jurnalku.ui.auth
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,98 +38,97 @@ fun RegisterScreen(
 ) {
     var step by remember { mutableIntStateOf(1) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
 
-        Text(
-            text = "JurnalKu",
-            style = MaterialTheme.typography.headlineLarge,
-            color = JungleGreen
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
 
-        Spacer(modifier = Modifier.height(80.dp))
+            Text(
+                text = "JurnalKu",
+                style = MaterialTheme.typography.headlineLarge,
+                color = JungleGreen
+            )
 
-        when (step) {
+            Spacer(modifier = Modifier.height(80.dp))
 
-            1 -> {
-                TextInput(
-                    value = email,
-                    onValueChange = onEmailChange,
-                    label = "Email",
-                    modifier = Modifier.fillMaxWidth()
-                )
+            when (step) {
 
-                Spacer(modifier = Modifier.height(24.dp))
-
-                if (errorMessage != null) {
-                    Text(
-                        text = errorMessage,
-                        color = androidx.compose.ui.graphics.Color.Red,
-                        style = MaterialTheme.typography.bodySmall
+                1 -> {
+                    TextInput(
+                        value = email,
+                        onValueChange = onEmailChange,
+                        label = "Email",
+                        modifier = Modifier.fillMaxWidth()
                     )
-                }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                CustomButton(
-                    text = "NEXT",
-                    onClick = {
-                        if (email.isNotBlank()) {
-                            step = 2
-                        }
-                    }
-                )
-            }
-
-            2 -> {
-                TextInput(
-                    value = password,
-                    onValueChange = onPasswordChange,
-                    label = "Password",
-                    isPassword = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                if (errorMessage != null) {
-                    Text(
-                        text = errorMessage,
-                        color = androidx.compose.ui.graphics.Color.Red,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                CustomButton(
-                    text = "REGISTER",
-                    onClick = {
-                        if (!isLoading) onRegisterClick()
-                    }
-                ) {
-                    if (isLoading) {
-                        CustomLoadingSpinner(
-                            modifier = Modifier.size(20.dp),
-                            color = White
+                    if (errorMessage != null) {
+                        Text(
+                            text = errorMessage,
+                            color = androidx.compose.ui.graphics.Color.Red,
+                            style = MaterialTheme.typography.bodySmall
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    CustomButton(
+                        text = "NEXT",
+                        onClick = {
+                            if (email.isNotBlank()) {
+                                step = 2
+                            }
+                        }
+                    )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                2 -> {
+                    TextInput(
+                        value = password,
+                        onValueChange = onPasswordChange,
+                        label = "Password",
+                        isPassword = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-                Text(
-                    text = "Back",
-                    color = JungleGreen,
-                    modifier = Modifier
-                        .clickable { step = 1 }
-                )
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    if (errorMessage != null) {
+                        Text(
+                            text = errorMessage,
+                            color = androidx.compose.ui.graphics.Color.Red,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    CustomButton(
+                        text = "REGISTER",
+                        onClick = {
+                            if (!isLoading) onRegisterClick()
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = "Back",
+                        color = JungleGreen,
+                        modifier = Modifier.clickable { step = 1 }
+                    )
+                }
             }
+        }
+
+        if (isLoading) {
+            CustomLoadingSpinner(isOverlay = true)
         }
     }
 }

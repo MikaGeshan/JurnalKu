@@ -17,7 +17,6 @@ import com.example.jurnalku.ui.theme.White
 fun CustomButton(
     text: String,
     onClick: () -> Unit,
-    content: (@Composable () -> Unit)? = null
 ) {
     Button(
         onClick = onClick,
@@ -35,17 +34,6 @@ fun CustomButton(
             contentColor = White
         )
     ) {
-
-        Box(
-            modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-
-            Text(text)
-
-            if (content != null) {
-                content()
-            }
-        }
+        Text(text)
     }
 }

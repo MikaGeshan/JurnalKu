@@ -37,6 +37,7 @@ import com.example.jurnalku.ui.theme.JungleGreen
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import com.example.jurnalku.ui.components.PaperTypePreview
 
 
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
@@ -67,10 +68,10 @@ fun CreateJournalScreen(
     )
 
     val paperTypes = listOf(
-        "Blank" to R.drawable.blank_page,
-        "Dot Grid" to R.drawable.dot_grid,
-        "Grid" to R.drawable.grid,
-        "Lined" to R.drawable.lined
+        "Blank",
+        "Dot Grid",
+        "Grid",
+        "Lined"
     )
 
     Column(
@@ -146,7 +147,7 @@ fun CreateJournalScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
 
-                    rowItems.forEach { (type, imageRes) ->
+                    rowItems.forEach { type ->
 
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -160,23 +161,19 @@ fun CreateJournalScreen(
 
                             Box(
                                 modifier = Modifier
-                                    .height(150.dp)
-                                    .fillMaxWidth()
-                                    .background(
-                                        selectedColor,
-                                        RoundedCornerShape(12.dp)
-                                    )
+                                    .width(200.dp)
+                                    .height(260.dp)
                                     .border(
                                         width = if (selectedType == type) 2.dp else 0.dp,
                                         color = JungleGreen,
                                         shape = RoundedCornerShape(12.dp)
                                     )
                             ) {
-                                Image(
-                                    painter = painterResource(id = imageRes),
-                                    contentDescription = type,
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
+                                PaperTypePreview(
+                                    type = type,
+                                    color = selectedColor,
+                                    isSelected = selectedType == type,
+                                    modifier = Modifier.fillMaxSize()
                                 )
                             }
 
