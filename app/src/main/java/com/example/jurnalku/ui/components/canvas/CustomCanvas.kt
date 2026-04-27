@@ -67,11 +67,11 @@ fun CustomCanvas(
         )
 
         // default content
-        Box(modifier = Modifier
-            .weight(1f)
-            .background(paperColor)
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .background(paperColor)
         ) {
-
 
             CanvasPattern(
                 type = paperType
@@ -95,16 +95,13 @@ fun CustomCanvas(
                 )
             )
 
-            // draw layer
-            if (mode == CanvasMode.DRAW) {
-
-                CanvasDrawMode(
-                    paths = paths,
-                    enabled = true,
-                    color = drawColor,
-                    strokeWidth = strokeWidth,
-                )
-            }
+            // draw layer selalu tampil
+            CanvasDrawMode(
+                paths = paths,
+                enabled = mode == CanvasMode.DRAW,
+                color = drawColor,
+                strokeWidth = strokeWidth,
+            )
         }
 
         // toolbar draw

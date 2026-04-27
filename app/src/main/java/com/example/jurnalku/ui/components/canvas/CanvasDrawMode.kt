@@ -16,6 +16,7 @@ data class DrawPath(
     val color: Color,
     val strokeWidth: Float
 )
+
 @Composable
 fun CanvasDrawMode(
     paths: MutableList<DrawPath>,
@@ -28,16 +29,13 @@ fun CanvasDrawMode(
     var drawColor by remember { mutableStateOf(color) }
     var drawStroke by remember { mutableStateOf(strokeWidth) }
 
-    Canvas(
-        modifier = Modifier
+    val drawModifier = if (enabled) {
+        Modifier
             .fillMaxSize()
-            .pointerInput(enabled, color, strokeWidth) {
-                if (!enabled) return@pointerInput
-
+            .pointerInput(color, strokeWidth) {
                 detectDragGestures(
                     onDragStart = {
                         currentPath = listOf(it)
-
                         drawColor = color
                         drawStroke = strokeWidth
                     },
@@ -56,6 +54,12 @@ fun CanvasDrawMode(
                     }
                 )
             }
+    } else {
+        Modifier.fillMaxSize()
+    }
+
+    Canvas(
+        modifier = drawModifier
     ) {
 
         // saved paths
