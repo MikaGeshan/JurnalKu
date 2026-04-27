@@ -54,7 +54,6 @@ fun LoginContainer(
                     val user = auth.currentUser
                     Log.d("LOGIN_SUCCESS", "uid=${user?.uid}")
 
-                    authStore.refreshUser()
                     onLoginSuccess()
                 } else {
                     errorMessage = task.exception?.message ?: "Login gagal"
@@ -84,7 +83,7 @@ fun LoginContainer(
             try {
                 val account = task.getResult(ApiException::class.java)
                 val idToken = account.idToken
-
+                Log.d("GOOGLE_ID_TOKEN", idToken ?: "NULL")
                 if (idToken == null) {
                     Log.e("GOOGLE_LOGIN", "ID Token NULL")
                     errorMessage = "Google login gagal (config error)"
@@ -101,7 +100,6 @@ fun LoginContainer(
                         isLoading = false
 
                         if (task.isSuccessful) {
-                            authStore.refreshUser()
                             onLoginSuccess()
                         } else {
                             errorMessage = "Google login gagal"

@@ -15,8 +15,6 @@ fun SplashContainer(
     LaunchedEffect(Unit) {
         delay(1500)
 
-        authStore.refreshUser()
-
         if (authStore.isLoggedIn) {
             onNavigateToEntries()
         } else {

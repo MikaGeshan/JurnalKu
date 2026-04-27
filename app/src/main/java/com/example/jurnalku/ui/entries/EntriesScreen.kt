@@ -5,16 +5,22 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.jurnalku.ui.components.icon.AppIconClass
 import com.example.jurnalku.ui.components.icon.ComposableIcon
+import com.example.jurnalku.ui.stores.AuthStore
 import com.example.jurnalku.ui.theme.Black
+import com.example.jurnalku.ui.theme.EmptyStateText
 import com.example.jurnalku.ui.theme.Grey
 import com.example.jurnalku.ui.theme.JungleGreen
+import com.example.jurnalku.ui.theme.SectionTitle
 
 @Composable
 fun EntriesScreen(
@@ -23,70 +29,82 @@ fun EntriesScreen(
     onNavigateCreateJournal: () -> Unit,
     onLogOut: () -> Unit
 ) {
+    val authStore: AuthStore = viewModel()
+    val user by authStore.user.collectAsState()
+
+    val firstName = user?.name?.split(" ")?.firstOrNull() ?: "User"
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, vertical = 20.dp)
     ) {
 
-        // header
+        // 🔹 HEADER
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            Text(
-                text = "Hi, User",
-                style = MaterialTheme.typography.headlineSmall
-            )
+            Column {
+                Text(
+                    text = "Hi, $firstName 👋",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                Text(
+                    text = "Welcome back",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = JungleGreen
+                )
+            }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
 
-                IconButton(onClick = {onNavigateCreateJournal() }) {
+                IconButton(onClick = onNavigateCreateJournal) {
                     ComposableIcon(
                         icon = AppIconClass.Add,
                         tint = JungleGreen,
-                        size = 28.dp
+                        size = 26.dp
                     )
                 }
 
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(6.dp))
 
                 Button(
-                    onClick = { },
+                    onClick = { /* mode select nanti aje */ },
                     shape = RoundedCornerShape(50),
-                    contentPadding = PaddingValues(horizontal = 10.dp),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Grey,
-                        contentColor = Black
-                    )
+                        containerColor = Grey.copy(alpha = 0.6f),
+                        contentColor = JungleGreen
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
                 ) {
-                    Text("Select", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "Select",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
 
-                Spacer(modifier = Modifier.width(4.dp))
-
-                IconButton(onClick = {onLogOut() }) {
+                IconButton(onClick = onLogOut) {
                     ComposableIcon(
                         icon = AppIconClass.Profile,
                         tint = JungleGreen,
-                        size = 28.dp
+                        size = 26.dp
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(28.dp))
 
-        // select mood
-        Text(
-            text = "How’s your day?",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
+        SectionTitle("How’s your day?")
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -96,53 +114,39 @@ fun EntriesScreen(
 
                 val isSelected = selectedMood == mood
 
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clickable { onMoodSelected(mood) }
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.clickable { onMoodSelected(mood) }
                 ) {
-                    ComposableIcon(
-                        icon = mood.icon,
-                        tint = Color.Unspecified,
-                        size = if (isSelected) 44.dp else 36.dp
-                    )
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(if (isSelected) 64.dp else 56.dp)
+                    ) {
+                        ComposableIcon(
+                            icon = mood.icon,
+                            tint = Color.Unspecified,
+                            size = if (isSelected) 44.dp else 36.dp
+                        )
+                    }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(28.dp))
 
-        // journal list
-        Text(
-            "My Journal",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
+        SectionTitle("My Journal")
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Text(
-            "No journals yet",
-            style = MaterialTheme.typography.bodyMedium,
-            color = Grey
-        )
+        EmptyStateText("No journals yet")
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(28.dp))
 
-        // recent opened pages
-        Text(
-            "Recent Pages",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
+        SectionTitle("Recent Pages")
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Text(
-            "No recent pages",
-            style = MaterialTheme.typography.bodyMedium,
-            color = Grey
-        )
+        EmptyStateText("No recent pages")
     }
 }
