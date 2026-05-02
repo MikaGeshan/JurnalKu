@@ -21,7 +21,8 @@ fun CanvasHeader(
     onClose: () -> Unit,
     onToggleDraw: () -> Unit,
     onUndo: () -> Unit,
-    onRedo: () -> Unit
+    onRedo: () -> Unit,
+    onSave: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -31,7 +32,14 @@ fun CanvasHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
 
+
         // on close
+        Text(
+            text = "Save",
+            modifier = Modifier.clickable { onSave() },
+            fontWeight = FontWeight.Bold
+        )
+
         Text(
             text = "X",
             modifier = Modifier.clickable { onClose() },

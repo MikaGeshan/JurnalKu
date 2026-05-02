@@ -15,6 +15,10 @@ fun JournalListContainer(
         navController.navigate("entries")
     }
 
+    fun handleSaveJournal() {
+        handleSaveJournal()
+    }
+
     JournalListScreen(
         onNavigateEntries = onNavigateEntries,
         onNavigateCreateJournal = onNavigateCreateJournal

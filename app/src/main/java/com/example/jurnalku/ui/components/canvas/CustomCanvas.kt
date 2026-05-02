@@ -28,7 +28,13 @@ val defaultColor = Color.Black
 fun CustomCanvas(
     paperColor: Color,
     paperType: String,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    onSave: (
+        text: String,
+        paths: List<DrawPath>,
+        paperType: String,
+        paperColor: Color
+    ) -> Unit
 ) {
     var mode by remember { mutableStateOf(CanvasMode.TEXT) }
     var text by remember { mutableStateOf("") }
@@ -38,6 +44,15 @@ fun CustomCanvas(
 
     val paths = remember { mutableStateListOf<DrawPath>() }
     val undonePaths = remember { mutableStateListOf<DrawPath>() }
+
+    fun handleSaveJournal() {
+        onSave(
+            text,
+            paths.toList(),
+            paperType,
+            paperColor
+        )
+    }
 
     val strokeWidth = when (selectedTool) {
         DrawTool.PEN -> 6f
@@ -63,7 +78,8 @@ fun CustomCanvas(
                 if (undonePaths.isNotEmpty()) {
                     paths.add(undonePaths.removeLast())
                 }
-            }
+            },
+            onSave = ::handleSaveJournal
         )
 
         // default content

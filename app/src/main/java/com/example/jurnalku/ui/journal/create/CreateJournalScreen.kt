@@ -40,13 +40,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import com.example.jurnalku.ui.components.PaperTypePreview
+import com.example.jurnalku.ui.components.canvas.DrawPath
 
 
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
 fun CreateJournalScreen(
     onBackToEntries: () -> Unit,
-    onCancelCreateJournal: () -> Unit)
+    onCancelCreateJournal: () -> Unit,
+    onSave: (
+        text: String,
+        paths: List<DrawPath>,
+        paperType: String,
+        paperColor: Color
+    ) -> Unit
+    )
 {
 
     var selectedColor by remember { mutableStateOf(Color.White) }
@@ -57,7 +65,8 @@ fun CreateJournalScreen(
         CustomCanvas(
             paperColor = selectedColor,
             paperType = selectedType,
-            onClose = onCancelCreateJournal
+            onClose = onCancelCreateJournal,
+            onSave = onSave
         )
         return
     }

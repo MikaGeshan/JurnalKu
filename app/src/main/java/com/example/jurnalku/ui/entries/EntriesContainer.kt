@@ -30,6 +30,8 @@ fun EntriesContainer(
         Log.d("=== mood payload", payload.toString())
     }
 
+//    fun handleDeleteJournal
+
     fun handleLogout() {
         Log.d("LOG_OUT", "logout")
 
