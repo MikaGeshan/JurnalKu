@@ -7,12 +7,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import java.util.UUID
+import com.example.jurnalku.ui.journal.list.JournalPayload
+import com.example.jurnalku.ui.journal.list.DrawPathPayload
+import com.example.jurnalku.ui.journal.list.DrawPointPayload
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.jurnalku.ui.components.canvas.DrawPath
 import com.example.jurnalku.ui.journal.list.JournalRepository
-import com.example.jurnalku.ui.journal.list.generateJournalPayload
 import com.example.jurnalku.ui.stores.AuthStore
 
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
@@ -32,6 +35,34 @@ fun CreateJournalContainer(
 
     val onCancelCreateJournal = {
         navController.navigate("journal_list")
+    }
+
+    fun generateJournalPayload(
+        text: String,
+        paperType: String,
+        paperColor: Color,
+        paths: List<DrawPath>
+    ): JournalPayload {
+
+        return JournalPayload(
+            contentId = UUID.randomUUID().toString(),
+            text = text,
+            paperType = paperType,
+            paperColor = paperColor.value.toLong(),
+
+            paths = paths.map { path ->
+                DrawPathPayload(
+                    points = path.points.map {
+                        DrawPointPayload(
+                            x = it.x,
+                            y = it.y
+                        )
+                    },
+                    color = path.color.value.toLong(),
+                    strokeWidth = path.strokeWidth
+                )
+            }
+        )
     }
 
     fun handleSaveJournal(
