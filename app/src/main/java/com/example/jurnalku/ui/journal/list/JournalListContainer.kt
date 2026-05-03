@@ -5,6 +5,9 @@ import android.util.Base64
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.jurnalku.ui.stores.AuthStore
@@ -20,6 +23,8 @@ fun JournalListContainer(
     val user by authStore.user.collectAsState()
     val getUserUid = user?.uid ?: return
 
+    var isLoading by remember { mutableStateOf(false) }
+
     val onNavigateEntries = {
         navController.navigate("entries")
     }
@@ -33,6 +38,8 @@ fun JournalListContainer(
         onSuccess: (List<JournalPayload>) -> Unit,
         onError: (Exception) -> Unit
     ) {
+
+        isLoading = true
 
         FirebaseFirestore.getInstance()
             .collection("journals")
@@ -66,6 +73,8 @@ fun JournalListContainer(
                     }
                 }
 
+                isLoading = false
+
                 Log.d(
                     "FIRESTORE",
                     journals.toString()
@@ -75,12 +84,16 @@ fun JournalListContainer(
             }
 
             .addOnFailureListener {
+
+                isLoading = false
+
                 onError(it)
             }
     }
 
     JournalListScreen(
         uid = getUserUid,
+        isLoading = isLoading,
         onNavigateEntries = onNavigateEntries,
         onNavigateCreateJournal = onNavigateCreateJournal,
         getListJournal = ::getListJournal

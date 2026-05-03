@@ -82,7 +82,7 @@ fun PaperTypePreview(
                         )
                     }
                 }
-// Blank
+                // Blank, ya blank aja wkwk
             }
         }
     }

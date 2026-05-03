@@ -1,11 +1,14 @@
 package com.example.jurnalku.ui.journal.list
 
 import android.util.Log
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,8 +28,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.jurnalku.ui.components.CustomLoadingSpinner
+import com.example.jurnalku.ui.components.PaperTypePreview
 import com.example.jurnalku.ui.components.icon.AppIconClass
 import com.example.jurnalku.ui.components.icon.ComposableIcon
 import com.example.jurnalku.ui.theme.Black
@@ -36,6 +42,7 @@ import com.example.jurnalku.ui.theme.JungleGreen
 @Composable
 fun JournalListScreen(
     uid: String,
+    isLoading: Boolean,
     onNavigateEntries: () -> Unit,
     onNavigateCreateJournal: () -> Unit,
     getListJournal: (
@@ -101,12 +108,29 @@ fun JournalListScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         journals.forEach { journal ->
-
-            Text(
-                text = journal.text
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
+            Box(
+                modifier = Modifier
+                    .width(200.dp)
+                    .height(260.dp)
+                    .border(
+                        width = 0.dp,
+                        color = JungleGreen,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+            ) {
+                PaperTypePreview(
+                    type = journal.paperType,
+                    color = Color(journal.paperColor.toULong()),
+                    isSelected = false,
+                    modifier = Modifier.fillMaxSize()
+                )
+                Text(
+                    text = "Journal "+journal.paperType
+                )
+            }
         }
+    }
+    if (isLoading) {
+        CustomLoadingSpinner(isOverlay = true)
     }
 }

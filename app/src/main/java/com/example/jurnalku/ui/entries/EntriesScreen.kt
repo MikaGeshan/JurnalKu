@@ -1,22 +1,28 @@
 package com.example.jurnalku.ui.entries
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.jurnalku.ui.components.CustomLoadingSpinner
+import com.example.jurnalku.ui.components.PaperTypePreview
 import com.example.jurnalku.ui.components.icon.AppIconClass
 import com.example.jurnalku.ui.components.icon.ComposableIcon
-import com.example.jurnalku.ui.stores.AuthStore
-import com.example.jurnalku.ui.theme.Black
+import com.example.jurnalku.ui.journal.list.JournalPayload
 import com.example.jurnalku.ui.theme.EmptyStateText
 import com.example.jurnalku.ui.theme.Grey
 import com.example.jurnalku.ui.theme.JungleGreen
@@ -24,15 +30,38 @@ import com.example.jurnalku.ui.theme.SectionTitle
 
 @Composable
 fun EntriesScreen(
+    uid: String,
+    name: String,
+    isLoading: Boolean,
     selectedMood: MoodClass?,
     onMoodSelected: (MoodClass) -> Unit,
     onNavigateCreateJournal: () -> Unit,
+    getListJournal: (
+        String,
+        (List<JournalPayload>) -> Unit,
+        (Exception) -> Unit
+    ) -> Unit,
     onLogOut: () -> Unit
 ) {
-    val authStore: AuthStore = viewModel()
-    val user by authStore.user.collectAsState()
+    var journals by remember {
+        mutableStateOf<List<JournalPayload>>(emptyList())
+    }
 
-    val firstName = user?.name?.split(" ")?.firstOrNull() ?: "User"
+    LaunchedEffect(Unit) {
+
+        getListJournal(
+            uid,
+            { result ->
+                journals = result
+            },
+            { error ->
+                Log.e(
+                    "JOURNAL",
+                    error.message ?: "ERROR"
+                )
+            }
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -40,7 +69,7 @@ fun EntriesScreen(
             .padding(horizontal = 16.dp, vertical = 20.dp)
     ) {
 
-        // 🔹 HEADER
+        // HEADER
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -49,7 +78,7 @@ fun EntriesScreen(
 
             Column {
                 Text(
-                    text = "Hi, $firstName 👋",
+                    text = "Hi, $name 👋",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -139,7 +168,41 @@ fun EntriesScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        EmptyStateText("No journals yet")
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+
+            items(journals) { journal ->
+
+                Box(
+                    modifier = Modifier
+                        .width(160.dp)
+                        .height(240.dp)
+                ) {
+
+                    PaperTypePreview(
+                        type = journal.paperType,
+                        color = Color(journal.paperColor.toULong()),
+                        isSelected = false,
+                        modifier = Modifier.fillMaxSize()
+                    )
+
+                    Text(
+                        text = "Journal ${journal.paperType}",
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(12.dp)
+                    )
+                }
+            }
+        }
+
+        if (journals.isEmpty()) {
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            EmptyStateText("No journals yet")
+        }
 
         Spacer(modifier = Modifier.height(28.dp))
 
@@ -148,5 +211,8 @@ fun EntriesScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         EmptyStateText("No recent pages")
+    }
+        if (isLoading) {
+        CustomLoadingSpinner(isOverlay = true)
     }
 }
