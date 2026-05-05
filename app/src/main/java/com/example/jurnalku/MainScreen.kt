@@ -11,10 +11,14 @@ import com.example.jurnalku.ui.components.BottomTabBar
 import com.example.jurnalku.ui.dateline.DatelineContainer
 import com.example.jurnalku.ui.entries.EntriesContainer
 import com.example.jurnalku.ui.journal.create.CreateJournalContainer
+import com.example.jurnalku.ui.journal.edit.EditJournalContainer
 import com.example.jurnalku.ui.journal.list.JournalListContainer
 import com.example.jurnalku.ui.splash.SplashContainer
 import com.example.jurnalku.ui.theme.SoftGreen
+import android.os.Build
+import androidx.annotation.RequiresApi
 
+@RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
@@ -107,6 +111,11 @@ fun MainScreen() {
 
             composable("create_journal") {
                 CreateJournalContainer(navController)
+            }
+
+            composable("edit_journal/{contentId}") { backStackEntry ->
+                val contentId = backStackEntry.arguments?.getString("contentId") ?: ""
+                EditJournalContainer(contentId, navController)
             }
         }
     }

@@ -137,6 +137,10 @@ fun EntriesContainer(
         onNavigateToLogin()
     }
 
+    val onEditJournal = { journal: JournalPayload ->
+        navController.navigate("edit_journal/${journal.contentId}")
+    }
+
     EntriesScreen(
         uid = getUserUid,
         name = getUserName,
@@ -146,6 +150,7 @@ fun EntriesContainer(
         onNavigateCreateJournal = onNavigateCreateJournal,
         getListJournal = ::getListJournal,
         onDeleteJournal = ::handleDeleteJournal,
+        onEditJournal = onEditJournal,
         onLogOut = ::handleLogout
     )
 }

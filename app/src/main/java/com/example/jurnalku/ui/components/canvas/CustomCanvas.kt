@@ -28,6 +28,8 @@ val defaultColor = Color.Black
 fun CustomCanvas(
     paperColor: Color,
     paperType: String,
+    initialText: String = "",
+    initialPaths: List<DrawPath> = emptyList(),
     onClose: () -> Unit,
     onSave: (
         text: String,
@@ -37,12 +39,12 @@ fun CustomCanvas(
     ) -> Unit
 ) {
     var mode by remember { mutableStateOf(CanvasMode.TEXT) }
-    var text by remember { mutableStateOf("") }
+    var text by remember { mutableStateOf(initialText) }
 
     var selectedTool by remember { mutableStateOf(DrawTool.PEN) }
     var selectedColor by remember { mutableStateOf(defaultColor) }
 
-    val paths = remember { mutableStateListOf<DrawPath>() }
+    val paths = remember { mutableStateListOf<DrawPath>().apply { addAll(initialPaths) } }
     val undonePaths = remember { mutableStateListOf<DrawPath>() }
 
     fun handleSaveJournal() {

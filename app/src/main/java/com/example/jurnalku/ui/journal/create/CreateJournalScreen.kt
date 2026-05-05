@@ -65,6 +65,8 @@ fun CreateJournalScreen(
         CustomCanvas(
             paperColor = selectedColor,
             paperType = selectedType,
+            initialText = "",
+            initialPaths = emptyList(),
             onClose = onCancelCreateJournal,
             onSave = onSave
         )

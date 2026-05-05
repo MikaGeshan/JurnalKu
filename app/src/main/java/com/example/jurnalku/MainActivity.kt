@@ -10,8 +10,11 @@ import com.example.jurnalku.ui.theme.JurnalKuTheme
 import androidx.compose.material3.Surface
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.example.jurnalku.ui.theme.SoftGreen
+import android.os.Build
+import androidx.annotation.RequiresApi
 
 class MainActivity : ComponentActivity() {
+    @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)

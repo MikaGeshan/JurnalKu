@@ -49,6 +49,7 @@ fun EntriesScreen(
         () -> Unit,
         (Exception) -> Unit
     ) -> Unit,
+    onEditJournal: (JournalPayload) -> Unit,
     onLogOut: () -> Unit
 ) {
     var journals by remember {
@@ -225,6 +226,8 @@ fun EntriesScreen(
                                 } else {
                                     selectedIds = selectedIds + journal.contentId
                                 }
+                            } else {
+                                onEditJournal(journal)
                             }
                         }
                 ) {
