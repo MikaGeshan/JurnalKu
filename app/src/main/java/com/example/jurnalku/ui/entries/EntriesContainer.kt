@@ -99,6 +99,36 @@ fun EntriesContainer(
             }
     }
 
+    fun handleDeleteJournal(
+        contentId: String,
+        onSuccess: () -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        isLoading = true
+
+        FirebaseFirestore.getInstance()
+            .collection("journals")
+            .whereEqualTo("content_id", contentId)
+            .get()
+            .addOnSuccessListener { result ->
+                val batch = FirebaseFirestore.getInstance().batch()
+                result.documents.forEach { batch.delete(it.reference) }
+                batch.commit()
+                    .addOnSuccessListener {
+                        isLoading = false
+                        onSuccess()
+                    }
+                    .addOnFailureListener {
+                        isLoading = false
+                        onError(it)
+                    }
+            }
+            .addOnFailureListener {
+                isLoading = false
+                onError(it)
+            }
+    }
+
     fun handleLogout() {
         Log.d("LOG_OUT", "logout")
 
@@ -115,6 +145,7 @@ fun EntriesContainer(
         onMoodSelected = ::handleMoodSelect,
         onNavigateCreateJournal = onNavigateCreateJournal,
         getListJournal = ::getListJournal,
+        onDeleteJournal = ::handleDeleteJournal,
         onLogOut = ::handleLogout
     )
 }

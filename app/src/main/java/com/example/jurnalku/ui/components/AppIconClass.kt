@@ -18,6 +18,7 @@ sealed class AppIconClass {
 //        Define default icons
         val Add = Vector(Icons.Default.AddCircle)
         val Profile = Vector(Icons.Default.AccountCircle)
+        val Check = Vector(Icons.Default.CheckCircle)
 
 //       Define XML
         val Journal = Drawable(R.drawable.journal)

@@ -1,10 +1,12 @@
 package com.example.jurnalku.ui.entries
 
 import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -15,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -41,13 +44,22 @@ fun EntriesScreen(
         (List<JournalPayload>) -> Unit,
         (Exception) -> Unit
     ) -> Unit,
+    onDeleteJournal: (
+        String,
+        () -> Unit,
+        (Exception) -> Unit
+    ) -> Unit,
     onLogOut: () -> Unit
 ) {
     var journals by remember {
         mutableStateOf<List<JournalPayload>>(emptyList())
     }
 
-    LaunchedEffect(Unit) {
+    var isSelectionMode by remember { mutableStateOf(false) }
+    var selectedIds by remember { mutableStateOf(setOf<String>()) }
+    var refreshTrigger by remember { mutableStateOf(0) }
+
+    LaunchedEffect(refreshTrigger) {
 
         getListJournal(
             uid,
@@ -103,17 +115,42 @@ fun EntriesScreen(
                 Spacer(modifier = Modifier.width(6.dp))
 
                 Button(
-                    onClick = { /* mode select nanti aje */ },
+                    onClick = {
+                        if (isSelectionMode) {
+                            if (selectedIds.isEmpty()) {
+                                isSelectionMode = false
+                            } else {
+                                var deletedCount = 0
+                                val totalToDelete = selectedIds.size
+                                selectedIds.forEach { id ->
+                                    onDeleteJournal(id, {
+                                        deletedCount++
+                                        if (deletedCount == totalToDelete) {
+                                            isSelectionMode = false
+                                            selectedIds = emptySet()
+                                            refreshTrigger++
+                                        }
+                                    }, {
+                                        Log.e("DELETE", it.message ?: "Error")
+                                    })
+                                }
+                            }
+                        } else {
+                            isSelectionMode = true
+                        }
+                    },
                     shape = RoundedCornerShape(50),
                     contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Grey.copy(alpha = 0.6f),
-                        contentColor = JungleGreen
+                        containerColor = if (isSelectionMode && selectedIds.isNotEmpty()) Color.Red.copy(alpha = 0.8f) else Grey.copy(alpha = 0.6f),
+                        contentColor = if (isSelectionMode && selectedIds.isNotEmpty()) Color.White else JungleGreen
                     ),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
                 ) {
                     Text(
-                        text = "Select",
+                        text = if (isSelectionMode) {
+                            if (selectedIds.isEmpty()) "Cancel" else "Delete (${selectedIds.size})"
+                        } else "Select",
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -174,18 +211,53 @@ fun EntriesScreen(
 
             items(journals) { journal ->
 
+                val isSelected = selectedIds.contains(journal.contentId)
+
                 Box(
                     modifier = Modifier
                         .width(160.dp)
                         .height(240.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            if (isSelectionMode) {
+                                if (isSelected) {
+                                    selectedIds = selectedIds - journal.contentId
+                                } else {
+                                    selectedIds = selectedIds + journal.contentId
+                                }
+                            }
+                        }
                 ) {
 
                     PaperTypePreview(
                         type = journal.paperType,
                         color = Color(journal.paperColor.toULong()),
-                        isSelected = false,
+                        isSelected = isSelected,
                         modifier = Modifier.fillMaxSize()
                     )
+
+                    if (isSelected) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.Black.copy(alpha = 0.3f))
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(10.dp)
+                                .size(24.dp)
+                                .background(Color.White, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            ComposableIcon(
+                                icon = AppIconClass.Check,
+                                tint = JungleGreen,
+                                size = 20.dp
+                            )
+                        }
+                    }
 
                     Text(
                         text = "Journal ${journal.paperType}",
