@@ -98,6 +98,23 @@ fun CustomCanvas(
     val paths = remember { mutableStateListOf<DrawPath>().apply { addAll(initialPaths) } }
     val undonePaths = remember { mutableStateListOf<DrawPath>() }
 
+    fun handleUndo() {
+        if (paths.isNotEmpty()) {
+            undonePaths.add(paths.removeLast())
+        }
+    }
+
+    fun handleRedo() {
+        if (undonePaths.isNotEmpty()) {
+            paths.add(undonePaths.removeLast())
+        }
+    }
+
+    fun handlePathAdded(newPath: DrawPath) {
+        paths.add(newPath)
+        undonePaths.clear() // Clear redo history when a new path is drawn
+    }
+
     fun handleSaveJournal() {
         onSave(
             text,
@@ -127,16 +144,10 @@ fun CustomCanvas(
             onToggleDraw = {
                 mode = if (mode == CanvasMode.DRAW) CanvasMode.TEXT else CanvasMode.DRAW
             },
-            onUndo = {
-                if (paths.isNotEmpty()) {
-                    undonePaths.add(paths.removeLast())
-                }
-            },
-            onRedo = {
-                if (undonePaths.isNotEmpty()) {
-                    paths.add(undonePaths.removeLast())
-                }
-            },
+            onUndo = ::handleUndo,
+            onRedo = ::handleRedo,
+            canUndo = paths.isNotEmpty(),
+            canRedo = undonePaths.isNotEmpty(),
             onSave = ::handleSaveJournal,
             onPickImage = {
                 photoPickerLauncher.launch(
@@ -218,6 +229,7 @@ fun CustomCanvas(
             // draw layer selalu tampil
             CanvasDrawMode(
                 paths = paths,
+                onPathAdded = ::handlePathAdded,
                 enabled = mode == CanvasMode.DRAW,
                 color = drawColor,
                 strokeWidth = strokeWidth,

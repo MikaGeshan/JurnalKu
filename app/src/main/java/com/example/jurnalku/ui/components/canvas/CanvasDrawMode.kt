@@ -19,7 +19,8 @@ data class DrawPath(
 
 @Composable
 fun CanvasDrawMode(
-    paths: MutableList<DrawPath>,
+    paths: List<DrawPath>,
+    onPathAdded: (DrawPath) -> Unit,
     enabled: Boolean,
     color: Color,
     strokeWidth: Float
@@ -43,7 +44,7 @@ fun CanvasDrawMode(
                         currentPath = currentPath + change.position
                     },
                     onDragEnd = {
-                        paths.add(
+                        onPathAdded(
                             DrawPath(
                                 points = currentPath,
                                 color = drawColor,

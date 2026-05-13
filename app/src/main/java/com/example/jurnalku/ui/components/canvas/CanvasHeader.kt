@@ -22,6 +22,8 @@ fun CanvasHeader(
     onToggleDraw: () -> Unit,
     onUndo: () -> Unit,
     onRedo: () -> Unit,
+    canUndo: Boolean,
+    canRedo: Boolean,
     onSave: () -> Unit,
     onPickImage: () -> Unit
 ) {
@@ -32,38 +34,61 @@ fun CanvasHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-
-
-        // on close
-        Text(
-            text = "Save",
-            modifier = Modifier.clickable { onSave() },
-            fontWeight = FontWeight.Bold
-        )
-
+        // Left corner: Close icon
         Text(
             text = "X",
-            modifier = Modifier.clickable { onClose() },
+            modifier = Modifier
+                .clickable { onClose() }
+                .padding(8.dp),
             fontWeight = FontWeight.Bold
         )
 
-        Row {
-
-            IconButton (onClick = onPickImage) {
+        // Center: ImagePicker and Toggle Draw
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onPickImage) {
                 ComposableIcon(icon = AppIconClass.Journal, tint = Color.Unspecified, size = 24.dp)
             }
 
             IconButton(onClick = onToggleDraw) {
                 ComposableIcon(icon = AppIconClass.PenTool, tint = Color.Unspecified, size = 24.dp)
             }
+        }
 
-            IconButton(onClick = onUndo) {
-                ComposableIcon(icon = AppIconClass.Undo, tint = Color.Unspecified, size = 24.dp)
+        // Right corner: Undo, Redo, and Save
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = onUndo,
+                enabled = canUndo
+            ) {
+                ComposableIcon(
+                    icon = AppIconClass.Undo, 
+                    tint = if (canUndo) Color.Unspecified else Color.Gray, 
+                    size = 24.dp
+                )
             }
 
-            IconButton(onClick = onRedo) {
-                ComposableIcon(icon = AppIconClass.Redo, tint = Color.Unspecified, size = 24.dp)
+            IconButton(
+                onClick = onRedo,
+                enabled = canRedo
+            ) {
+                ComposableIcon(
+                    icon = AppIconClass.Redo, 
+                    tint = if (canRedo) Color.Unspecified else Color.Gray, 
+                    size = 24.dp
+                )
             }
+
+            Text(
+                text = "Save",
+                modifier = Modifier
+                    .clickable { onSave() }
+                    .padding(start = 8.dp),
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }
