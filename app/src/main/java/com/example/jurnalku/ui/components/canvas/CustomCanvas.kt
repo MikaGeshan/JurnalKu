@@ -21,6 +21,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import android.util.Log
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.unit.IntSize
 
 val defaultColor = Color.Black
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
@@ -30,16 +43,44 @@ fun CustomCanvas(
     paperType: String,
     initialText: String = "",
     initialPaths: List<DrawPath> = emptyList(),
+    initialImageUri: String? = null,
+    initialImageOffsetX: Float = 0f,
+    initialImageOffsetY: Float = 0f,
+    initialImageScale: Float = 1f,
+    initialImageRotation: Float = 0f,
     onClose: () -> Unit,
     onSave: (
         text: String,
         paths: List<DrawPath>,
         paperType: String,
-        paperColor: Color
+        paperColor: Color,
+        imageUri: String?,
+        imageOffsetX: Float,
+        imageOffsetY: Float,
+        imageScale: Float,
+        imageRotation: Float
     ) -> Unit
 ) {
     var mode by remember { mutableStateOf(CanvasMode.TEXT) }
     var text by remember { mutableStateOf(initialText) }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(initialImageUri?.let { Uri.parse(it) }) }
+
+    // image transformation state
+    var imageOffset by remember { mutableStateOf(Offset(initialImageOffsetX, initialImageOffsetY)) }
+    var imageScale by remember { mutableStateOf(initialImageScale) }
+    var imageRotation by remember { mutableStateOf(initialImageRotation) }
+
+    var canvasSize by remember { mutableStateOf(IntSize.Zero) }
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri -> 
+            if (uri != null) {
+                selectedImageUri = uri
+                mode = CanvasMode.IMAGE
+            }
+        }
+    )
 
     var selectedTool by remember { mutableStateOf(DrawTool.PEN) }
     var selectedColor by remember { mutableStateOf(defaultColor) }
@@ -52,7 +93,12 @@ fun CustomCanvas(
             text,
             paths.toList(),
             paperType,
-            paperColor
+            paperColor,
+            selectedImageUri?.toString(),
+            imageOffset.x,
+            imageOffset.y,
+            imageScale,
+            imageRotation
         )
     }
 
@@ -69,7 +115,7 @@ fun CustomCanvas(
         CanvasHeader(
             onClose = onClose,
             onToggleDraw = {
-                mode = if (mode == CanvasMode.TEXT) CanvasMode.DRAW else CanvasMode.TEXT
+                mode = if (mode == CanvasMode.DRAW) CanvasMode.TEXT else CanvasMode.DRAW
             },
             onUndo = {
                 if (paths.isNotEmpty()) {
@@ -81,7 +127,16 @@ fun CustomCanvas(
                     paths.add(undonePaths.removeLast())
                 }
             },
-            onSave = ::handleSaveJournal
+            onSave = ::handleSaveJournal,
+            onPickImage = {
+                if (selectedImageUri == null) {
+                    photoPickerLauncher.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    )
+                } else {
+                    mode = if (mode == CanvasMode.IMAGE) CanvasMode.TEXT else CanvasMode.IMAGE
+                }
+            }
         )
 
         // default content
@@ -89,11 +144,33 @@ fun CustomCanvas(
             modifier = Modifier
                 .weight(1f)
                 .background(paperColor)
+                .clipToBounds()
+                .onGloballyPositioned { coordinates ->
+                    canvasSize = coordinates.size
+                }
         ) {
 
             CanvasPattern(
                 type = paperType
             )
+
+            // image layer
+            selectedImageUri?.let { uri ->
+                AsyncImage(
+                    model = uri,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer(
+                            translationX = imageOffset.x,
+                            translationY = imageOffset.y,
+                            scaleX = imageScale,
+                            scaleY = imageScale,
+                            rotationZ = imageRotation
+                        ),
+                    contentScale = ContentScale.Fit
+                )
+            }
 
             // text layer
             TextField(
@@ -120,6 +197,36 @@ fun CustomCanvas(
                 color = drawColor,
                 strokeWidth = strokeWidth,
             )
+
+            // Image transformation overlay
+            if (mode == CanvasMode.IMAGE) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pointerInput(Unit) {
+                            detectTransformGestures { _, pan, zoom, rotation ->
+                                // Constrain Scale
+                                imageScale = (imageScale * zoom).coerceIn(0.2f, 8f)
+                                
+                                // Apply Rotation
+                                imageRotation += rotation
+                                
+                                // Apply Pan with boundaries
+                                val newOffset = imageOffset + pan
+                                
+                                // Allow moving the image center up to its own scaled size away from canvas center
+                                // This keeps at least a part of the image visible
+                                val boundX = canvasSize.width.toFloat()
+                                val boundY = canvasSize.height.toFloat()
+                                
+                                imageOffset = Offset(
+                                    x = newOffset.x.coerceIn(-boundX, boundX),
+                                    y = newOffset.y.coerceIn(-boundY, boundY)
+                                )
+                            }
+                        }
+                )
+            }
         }
 
         // toolbar draw

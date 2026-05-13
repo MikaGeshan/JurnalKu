@@ -5,7 +5,12 @@ data class JournalPayload(
     val text: String = "",
     val paperType: String = "",
     val paperColor: Long = 0L,
-    val paths: List<DrawPathPayload> = emptyList()
+    val paths: List<DrawPathPayload> = emptyList(),
+    val imageUri: String? = null,
+    val imageOffsetX: Float = 0f,
+    val imageOffsetY: Float = 0f,
+    val imageScale: Float = 1f,
+    val imageRotation: Float = 0f
 )
 
 data class DrawPointPayload(

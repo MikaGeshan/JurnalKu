@@ -18,7 +18,12 @@ fun EditJournalScreen(
         text: String,
         paths: List<DrawPath>,
         paperType: String,
-        paperColor: Color
+        paperColor: Color,
+        imageUri: String?,
+        imageOffsetX: Float,
+        imageOffsetY: Float,
+        imageScale: Float,
+        imageRotation: Float
     ) -> Unit
 ) {
     val initialPaths = remember(journal) {
@@ -36,6 +41,11 @@ fun EditJournalScreen(
         paperType = journal.paperType,
         initialText = journal.text,
         initialPaths = initialPaths,
+        initialImageUri = journal.imageUri,
+        initialImageOffsetX = journal.imageOffsetX,
+        initialImageOffsetY = journal.imageOffsetY,
+        initialImageScale = journal.imageScale,
+        initialImageRotation = journal.imageRotation,
         onClose = onBack,
         onSave = onSave
     )

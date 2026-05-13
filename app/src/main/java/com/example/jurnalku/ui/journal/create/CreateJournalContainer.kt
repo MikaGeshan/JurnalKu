@@ -41,7 +41,12 @@ fun CreateJournalContainer(
         text: String,
         paperType: String,
         paperColor: Color,
-        paths: List<DrawPath>
+        paths: List<DrawPath>,
+        imageUri: String?,
+        imageOffsetX: Float,
+        imageOffsetY: Float,
+        imageScale: Float,
+        imageRotation: Float
     ): JournalPayload {
 
         return JournalPayload(
@@ -49,6 +54,11 @@ fun CreateJournalContainer(
             text = text,
             paperType = paperType,
             paperColor = paperColor.value.toLong(),
+            imageUri = imageUri,
+            imageOffsetX = imageOffsetX,
+            imageOffsetY = imageOffsetY,
+            imageScale = imageScale,
+            imageRotation = imageRotation,
 
             paths = paths.map { path ->
                 DrawPathPayload(
@@ -69,14 +79,24 @@ fun CreateJournalContainer(
         text: String,
         paths: List<DrawPath>,
         paperType: String,
-        paperColor: Color
+        paperColor: Color,
+        imageUri: String?,
+        imageOffsetX: Float,
+        imageOffsetY: Float,
+        imageScale: Float,
+        imageRotation: Float
     ) {
 
         val payload = generateJournalPayload(
             text = text,
             paperType = paperType,
             paperColor = paperColor,
-            paths = paths
+            paths = paths,
+            imageUri = imageUri,
+            imageOffsetX = imageOffsetX,
+            imageOffsetY = imageOffsetY,
+            imageScale = imageScale,
+            imageRotation = imageRotation
         )
 
         val uid = user?.uid ?: return

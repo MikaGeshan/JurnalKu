@@ -22,7 +22,8 @@ fun CanvasHeader(
     onToggleDraw: () -> Unit,
     onUndo: () -> Unit,
     onRedo: () -> Unit,
-    onSave: () -> Unit
+    onSave: () -> Unit,
+    onPickImage: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -48,7 +49,7 @@ fun CanvasHeader(
 
         Row {
 
-            IconButton (onClick = { /* TODO image picker */ }) {
+            IconButton (onClick = onPickImage) {
                 ComposableIcon(icon = AppIconClass.Journal, tint = Color.Unspecified, size = 24.dp)
             }
 

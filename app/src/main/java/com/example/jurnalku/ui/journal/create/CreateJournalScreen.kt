@@ -52,7 +52,12 @@ fun CreateJournalScreen(
         text: String,
         paths: List<DrawPath>,
         paperType: String,
-        paperColor: Color
+        paperColor: Color,
+        imageUri: String?,
+        imageOffsetX: Float,
+        imageOffsetY: Float,
+        imageScale: Float,
+        imageRotation: Float
     ) -> Unit
     )
 {
@@ -67,6 +72,11 @@ fun CreateJournalScreen(
             paperType = selectedType,
             initialText = "",
             initialPaths = emptyList(),
+            initialImageUri = null,
+            initialImageOffsetX = 0f,
+            initialImageOffsetY = 0f,
+            initialImageScale = 1f,
+            initialImageRotation = 0f,
             onClose = onCancelCreateJournal,
             onSave = onSave
         )

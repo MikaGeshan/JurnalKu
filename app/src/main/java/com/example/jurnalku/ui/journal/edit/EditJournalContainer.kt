@@ -40,7 +40,12 @@ fun EditJournalContainer(
         text: String,
         paths: List<DrawPath>,
         paperType: String,
-        paperColor: Color
+        paperColor: Color,
+        imageUri: String?,
+        imageOffsetX: Float,
+        imageOffsetY: Float,
+        imageScale: Float,
+        imageRotation: Float
     ) {
         val currentJournal = journal ?: return
         
@@ -48,6 +53,11 @@ fun EditJournalContainer(
             text = text,
             paperType = paperType,
             paperColor = paperColor.value.toLong(),
+            imageUri = imageUri,
+            imageOffsetX = imageOffsetX,
+            imageOffsetY = imageOffsetY,
+            imageScale = imageScale,
+            imageRotation = imageRotation,
             paths = paths.map { path ->
                 DrawPathPayload(
                     points = path.points.map { DrawPointPayload(it.x, it.y) },
