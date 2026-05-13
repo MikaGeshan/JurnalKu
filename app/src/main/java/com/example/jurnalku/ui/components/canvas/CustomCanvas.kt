@@ -22,6 +22,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import android.util.Log
 import android.net.Uri
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.util.Base64
+import java.io.ByteArrayOutputStream
+import androidx.compose.ui.platform.LocalContext
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -43,7 +48,7 @@ fun CustomCanvas(
     paperType: String,
     initialText: String = "",
     initialPaths: List<DrawPath> = emptyList(),
-    initialImageUri: String? = null,
+    initialImageBase64: String? = null,
     initialImageOffsetX: Float = 0f,
     initialImageOffsetY: Float = 0f,
     initialImageScale: Float = 1f,
@@ -54,16 +59,17 @@ fun CustomCanvas(
         paths: List<DrawPath>,
         paperType: String,
         paperColor: Color,
-        imageUri: String?,
+        imageBase64: String?,
         imageOffsetX: Float,
         imageOffsetY: Float,
         imageScale: Float,
         imageRotation: Float
     ) -> Unit
 ) {
+    val context = LocalContext.current
     var mode by remember { mutableStateOf(CanvasMode.TEXT) }
     var text by remember { mutableStateOf(initialText) }
-    var selectedImageUri by remember { mutableStateOf<Uri?>(initialImageUri?.let { Uri.parse(it) }) }
+    var selectedImageBase64 by remember { mutableStateOf(initialImageBase64) }
 
     // image transformation state
     var imageOffset by remember { mutableStateOf(Offset(initialImageOffsetX, initialImageOffsetY)) }
@@ -76,8 +82,11 @@ fun CustomCanvas(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri -> 
             if (uri != null) {
-                selectedImageUri = uri
-                mode = CanvasMode.IMAGE
+                val base64 = uriToBase64(context, uri)
+                if (base64 != null) {
+                    selectedImageBase64 = base64
+                    mode = CanvasMode.IMAGE
+                }
             }
         }
     )
@@ -94,7 +103,7 @@ fun CustomCanvas(
             paths.toList(),
             paperType,
             paperColor,
-            selectedImageUri?.toString(),
+            selectedImageBase64,
             imageOffset.x,
             imageOffset.y,
             imageScale,
@@ -129,7 +138,7 @@ fun CustomCanvas(
             },
             onSave = ::handleSaveJournal,
             onPickImage = {
-                if (selectedImageUri == null) {
+                if (selectedImageBase64 == null) {
                     photoPickerLauncher.launch(
                         PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                     )
@@ -155,21 +164,31 @@ fun CustomCanvas(
             )
 
             // image layer
-            selectedImageUri?.let { uri ->
-                AsyncImage(
-                    model = uri,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .graphicsLayer(
-                            translationX = imageOffset.x,
-                            translationY = imageOffset.y,
-                            scaleX = imageScale,
-                            scaleY = imageScale,
-                            rotationZ = imageRotation
-                        ),
-                    contentScale = ContentScale.Fit
-                )
+            selectedImageBase64?.let { base64String ->
+                val imageBytes = remember(base64String) {
+                    try {
+                        Base64.decode(base64String, Base64.DEFAULT)
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+                
+                if (imageBytes != null) {
+                    AsyncImage(
+                        model = imageBytes,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer(
+                                translationX = imageOffset.x,
+                                translationY = imageOffset.y,
+                                scaleX = imageScale,
+                                scaleY = imageScale,
+                                rotationZ = imageRotation
+                            ),
+                        contentScale = ContentScale.Fit
+                    )
+                }
             }
 
             // text layer
@@ -241,5 +260,42 @@ fun CustomCanvas(
                 }
             )
         }
+    }
+}
+
+private fun uriToBase64(context: android.content.Context, uri: Uri): String? {
+    return try {
+        val inputStream = context.contentResolver.openInputStream(uri)
+        val originalBitmap = BitmapFactory.decodeStream(inputStream)
+        inputStream?.close()
+
+        if (originalBitmap == null) return null
+
+        // Calculate scaled dimensions (max 1024px)
+        val maxDimension = 1024
+        val scale = Math.min(
+            maxDimension.toFloat() / originalBitmap.width,
+            maxDimension.toFloat() / originalBitmap.height
+        ).coerceAtMost(1f)
+
+        val scaledBitmap = if (scale < 1f) {
+            Bitmap.createScaledBitmap(
+                originalBitmap,
+                (originalBitmap.width * scale).toInt(),
+                (originalBitmap.height * scale).toInt(),
+                true
+            )
+        } else {
+            originalBitmap
+        }
+
+        val outputStream = ByteArrayOutputStream()
+        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream)
+        val byteArray = outputStream.toByteArray()
+        
+        Base64.encodeToString(byteArray, Base64.DEFAULT)
+    } catch (e: Exception) {
+        Log.e("IMAGE_ERROR", "Failed to convert image to Base64", e)
+        null
     }
 }

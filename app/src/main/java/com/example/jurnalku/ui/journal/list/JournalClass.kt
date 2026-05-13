@@ -6,7 +6,7 @@ data class JournalPayload(
     val paperType: String = "",
     val paperColor: Long = 0L,
     val paths: List<DrawPathPayload> = emptyList(),
-    val imageUri: String? = null,
+    val imageBase64: String? = null,
     val imageOffsetX: Float = 0f,
     val imageOffsetY: Float = 0f,
     val imageScale: Float = 1f,
