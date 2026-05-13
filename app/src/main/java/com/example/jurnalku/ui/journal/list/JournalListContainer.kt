@@ -30,7 +30,7 @@ fun JournalListContainer(
     }
 
     val onNavigateCreateJournal = {
-        navController.navigate("entries")
+        navController.navigate("create_journal")
     }
 
     fun getListJournal(

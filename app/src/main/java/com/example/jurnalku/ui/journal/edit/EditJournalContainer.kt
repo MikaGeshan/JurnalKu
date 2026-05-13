@@ -21,6 +21,7 @@ fun EditJournalContainer(
     val repository = remember { JournalRepository() }
     var journal by remember { mutableStateOf<JournalPayload?>(null) }
     var isLoading by remember { mutableStateOf(true) }
+    var showUpdateSuccessDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(contentId) {
         repository.getJournal(
@@ -71,7 +72,7 @@ fun EditJournalContainer(
             contentId = contentId,
             payload = updatedJournal,
             onSuccess = {
-                navController.popBackStack()
+                showUpdateSuccessDialog = true
             },
             onError = {
                 Log.e("EDIT_JOURNAL", it.message ?: "Update Error")
@@ -89,5 +90,23 @@ fun EditJournalContainer(
                 onSave = ::handleSave
             )
         }
+    }
+
+    if (showUpdateSuccessDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { /* Don't dismiss by clicking outside */ },
+            confirmButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = {
+                        showUpdateSuccessDialog = false
+                        navController.popBackStack()
+                    }
+                ) {
+                    androidx.compose.material3.Text("OK")
+                }
+            },
+            title = { androidx.compose.material3.Text("Updated") },
+            text = { androidx.compose.material3.Text("Your journal has been updated successfully!") }
+        )
     }
 }

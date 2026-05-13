@@ -7,6 +7,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import java.util.UUID
 import com.example.jurnalku.ui.journal.list.JournalPayload
 import com.example.jurnalku.ui.journal.list.DrawPathPayload
@@ -28,6 +30,8 @@ fun CreateJournalContainer(
 
     val authStore: AuthStore = viewModel()
     val user by authStore.user.collectAsState()
+
+    var showSuccessDialog by remember { mutableStateOf(false) }
 
     val onBackToEntries = {
         navController.navigate("entries")
@@ -107,8 +111,7 @@ fun CreateJournalContainer(
 
             onSuccess = {
                 Log.d("FIRESTORE", "SAVE SUCCESS")
-
-                navController.navigate("entries")
+                showSuccessDialog = true
             },
 
             onError = {
@@ -125,4 +128,24 @@ fun CreateJournalContainer(
         onBackToEntries = onBackToEntries,
         onSave = ::handleSaveJournal
     )
+
+    if (showSuccessDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { /* Don't dismiss by clicking outside */ },
+            confirmButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = {
+                        showSuccessDialog = false
+                        navController.navigate("entries") {
+                            popUpTo("entries") { inclusive = true }
+                        }
+                    }
+                ) {
+                    androidx.compose.material3.Text("OK")
+                }
+            },
+            title = { androidx.compose.material3.Text("Success") },
+            text = { androidx.compose.material3.Text("Your journal has been created successfully!") }
+        )
+    }
 }
