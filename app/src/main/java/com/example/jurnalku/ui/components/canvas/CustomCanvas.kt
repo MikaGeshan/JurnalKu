@@ -33,6 +33,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -138,13 +139,9 @@ fun CustomCanvas(
             },
             onSave = ::handleSaveJournal,
             onPickImage = {
-                if (selectedImageBase64 == null) {
-                    photoPickerLauncher.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                    )
-                } else {
-                    mode = if (mode == CanvasMode.IMAGE) CanvasMode.TEXT else CanvasMode.IMAGE
-                }
+                photoPickerLauncher.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                )
             }
         )
 
@@ -163,7 +160,25 @@ fun CustomCanvas(
                 type = paperType
             )
 
-            // image layer
+            // text layer
+            TextField(
+                value = text,
+                onValueChange = { text = it },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                placeholder = { Text("Start writing...") },
+                enabled = mode == CanvasMode.TEXT,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent
+                )
+            )
+
+            // image layer - moved above TextField to catch touches
             selectedImageBase64?.let { base64String ->
                 val imageBytes = remember(base64String) {
                     try {
@@ -185,29 +200,20 @@ fun CustomCanvas(
                                 scaleX = imageScale,
                                 scaleY = imageScale,
                                 rotationZ = imageRotation
+                            )
+                            .then(
+                                if (mode == CanvasMode.TEXT) {
+                                    Modifier.pointerInput(Unit) {
+                                        detectTapGestures {
+                                            mode = CanvasMode.IMAGE
+                                        }
+                                    }
+                                } else Modifier
                             ),
                         contentScale = ContentScale.Fit
                     )
                 }
             }
-
-            // text layer
-            TextField(
-                value = text,
-                onValueChange = { text = it },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                placeholder = { Text("Start writing...") },
-                enabled = mode == CanvasMode.TEXT,
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
-                )
-            )
 
             // draw layer selalu tampil
             CanvasDrawMode(
