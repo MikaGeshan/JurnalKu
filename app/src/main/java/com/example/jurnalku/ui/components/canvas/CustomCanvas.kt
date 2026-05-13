@@ -229,6 +229,11 @@ fun CustomCanvas(
                     modifier = Modifier
                         .fillMaxSize()
                         .pointerInput(Unit) {
+                            detectTapGestures {
+                                mode = CanvasMode.TEXT
+                            }
+                        }
+                        .pointerInput(Unit) {
                             detectTransformGestures { _, pan, zoom, rotation ->
                                 // Constrain Scale
                                 imageScale = (imageScale * zoom).coerceIn(0.2f, 8f)
