@@ -113,9 +113,9 @@ fun MainScreen() {
                 CreateJournalContainer(navController)
             }
 
-            composable("edit_journal/{contentId}") { backStackEntry ->
-                val contentId = backStackEntry.arguments?.getString("contentId") ?: ""
-                EditJournalContainer(contentId, navController)
+            composable("edit_journal/{journalId}") { backStackEntry ->
+                val journalId = backStackEntry.arguments?.getString("journalId") ?: ""
+                EditJournalContainer(journalId, navController)
             }
         }
     }

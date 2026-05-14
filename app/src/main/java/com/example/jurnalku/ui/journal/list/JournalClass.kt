@@ -1,6 +1,12 @@
 package com.example.jurnalku.ui.journal.list
 
-data class JournalPayload(
+data class JournalEntry(
+    val journalId: String = "",
+    val journalName: String = "",
+    val payload: JournalPagePayload = JournalPagePayload()
+)
+
+data class JournalPagePayload(
     val contentId: String = "",
     val text: String = "",
     val paperType: String = "",

@@ -9,25 +9,25 @@ import androidx.navigation.NavController
 import com.example.jurnalku.ui.components.canvas.DrawPath
 import com.example.jurnalku.ui.journal.list.DrawPathPayload
 import com.example.jurnalku.ui.journal.list.DrawPointPayload
-import com.example.jurnalku.ui.journal.list.JournalPayload
+import com.example.jurnalku.ui.journal.list.JournalPagePayload
 import com.example.jurnalku.ui.journal.list.JournalRepository
 
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
 fun EditJournalContainer(
-    contentId: String,
+    journalId: String,
     navController: NavController
 ) {
     val repository = remember { JournalRepository() }
-    var journal by remember { mutableStateOf<JournalPayload?>(null) }
+    var journalPayload by remember { mutableStateOf<JournalPagePayload?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var showUpdateSuccessDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(contentId) {
+    LaunchedEffect(journalId) {
         repository.getJournal(
-            contentId = contentId,
+            journalId = journalId,
             onSuccess = {
-                journal = it
+                journalPayload = it.payload
                 isLoading = false
             },
             onError = {
@@ -48,9 +48,9 @@ fun EditJournalContainer(
         imageScale: Float,
         imageRotation: Float
     ) {
-        val currentJournal = journal ?: return
+        val currentPayload = journalPayload ?: return
         
-        val updatedJournal = currentJournal.copy(
+        val updatedPayload = currentPayload.copy(
             text = text,
             paperType = paperType,
             paperColor = paperColor.value.toLong(),
@@ -69,8 +69,8 @@ fun EditJournalContainer(
         )
 
         repository.updateJournal(
-            contentId = contentId,
-            payload = updatedJournal,
+            journalId = journalId,
+            payload = updatedPayload,
             onSuccess = {
                 showUpdateSuccessDialog = true
             },
@@ -83,7 +83,7 @@ fun EditJournalContainer(
     if (isLoading) {
         // You can add a loading spinner here
     } else {
-        journal?.let {
+        journalPayload?.let {
             EditJournalScreen(
                 journal = it,
                 onBack = { navController.popBackStack() },

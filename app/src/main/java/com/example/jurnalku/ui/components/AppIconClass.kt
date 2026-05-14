@@ -31,5 +31,6 @@ sealed class AppIconClass {
         val Image = Drawable(R.drawable.image)
         val Undo = Drawable(R.drawable.undo)
         val Redo = Drawable(R.drawable.redo)
+        val More = Vector(Icons.Default.MoreVert)
     }
 }

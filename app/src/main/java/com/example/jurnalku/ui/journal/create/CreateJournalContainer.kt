@@ -10,7 +10,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import java.util.UUID
-import com.example.jurnalku.ui.journal.list.JournalPayload
+import com.example.jurnalku.ui.journal.list.JournalPagePayload
+import com.example.jurnalku.ui.journal.list.JournalEntry
 import com.example.jurnalku.ui.journal.list.DrawPathPayload
 import com.example.jurnalku.ui.journal.list.DrawPointPayload
 import androidx.compose.ui.graphics.Color
@@ -19,6 +20,15 @@ import androidx.navigation.NavController
 import com.example.jurnalku.ui.components.canvas.DrawPath
 import com.example.jurnalku.ui.journal.list.JournalRepository
 import com.example.jurnalku.ui.stores.AuthStore
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Modifier
 
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
@@ -32,13 +42,26 @@ fun CreateJournalContainer(
     val user by authStore.user.collectAsState()
 
     var showSuccessDialog by remember { mutableStateOf(false) }
+    var showNameDialog by remember { mutableStateOf(false) }
+    var showCanvas by remember { mutableStateOf(false) }
+    var journalName by remember { mutableStateOf("") }
 
     val onBackToEntries = {
-        navController.navigate("entries")
+        if (showCanvas) {
+            showCanvas = false
+            journalName = ""
+        } else {
+            navController.navigate("entries")
+        }
     }
 
     val onCancelCreateJournal = {
-        navController.navigate("journal_list")
+        if (showCanvas) {
+            showCanvas = false
+            journalName = ""
+        } else {
+            navController.navigate("journal_list")
+        }
     }
 
     fun generateJournalPayload(
@@ -51,9 +74,9 @@ fun CreateJournalContainer(
         imageOffsetY: Float,
         imageScale: Float,
         imageRotation: Float
-    ): JournalPayload {
+    ): JournalPagePayload {
 
-        return JournalPayload(
+        return JournalPagePayload(
             contentId = UUID.randomUUID().toString(),
             text = text,
             paperType = paperType,
@@ -90,7 +113,6 @@ fun CreateJournalContainer(
         imageScale: Float,
         imageRotation: Float
     ) {
-
         val payload = generateJournalPayload(
             text = text,
             paperType = paperType,
@@ -105,9 +127,15 @@ fun CreateJournalContainer(
 
         val uid = user?.uid ?: return
 
+        val journalEntry = JournalEntry(
+            journalId = UUID.randomUUID().toString(),
+            journalName = journalName,
+            payload = payload
+        )
+
         repository.saveJournal(
             uid = uid,
-            payload = payload,
+            journalEntry = journalEntry,
 
             onSuccess = {
                 Log.d("FIRESTORE", "SAVE SUCCESS")
@@ -126,14 +154,55 @@ fun CreateJournalContainer(
     CreateJournalScreen(
         onCancelCreateJournal = onCancelCreateJournal,
         onBackToEntries = onBackToEntries,
+        showCanvas = showCanvas,
+        onPaperSelected = { type, color ->
+            showNameDialog = true
+        },
         onSave = ::handleSaveJournal
     )
 
+    if (showNameDialog) {
+        AlertDialog(
+            onDismissRequest = { showNameDialog = false },
+            title = { Text("Enter Journal Name") },
+            text = {
+                Column {
+                    Text("Please provide a name for your journal.")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    TextField(
+                        value = journalName,
+                        onValueChange = { journalName = it },
+                        placeholder = { Text("My Journal") },
+                        singleLine = true
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (journalName.isNotBlank()) {
+                            showNameDialog = false
+                            showCanvas = true
+                        }
+                    },
+                    enabled = journalName.isNotBlank()
+                ) {
+                    Text("Continue")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showNameDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     if (showSuccessDialog) {
-        androidx.compose.material3.AlertDialog(
+        AlertDialog(
             onDismissRequest = { /* Don't dismiss by clicking outside */ },
             confirmButton = {
-                androidx.compose.material3.TextButton(
+                TextButton(
                     onClick = {
                         showSuccessDialog = false
                         navController.navigate("entries") {
@@ -141,11 +210,11 @@ fun CreateJournalContainer(
                         }
                     }
                 ) {
-                    androidx.compose.material3.Text("OK")
+                    Text("OK")
                 }
             },
-            title = { androidx.compose.material3.Text("Success") },
-            text = { androidx.compose.material3.Text("Your journal has been created successfully!") }
+            title = { Text("Success") },
+            text = { Text("Your journal has been created successfully!") }
         )
     }
 }

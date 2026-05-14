@@ -35,7 +35,7 @@ fun JournalListContainer(
 
     fun getListJournal(
         uid: String,
-        onSuccess: (List<JournalPayload>) -> Unit,
+        onSuccess: (List<JournalEntry>) -> Unit,
         onError: (Exception) -> Unit
     ) {
 
@@ -56,6 +56,9 @@ fun JournalListContainer(
                             document.getString("payload")
                                 ?: return@mapNotNull null
 
+                        val journalId = document.id
+                        val journalName = document.getString("journal_name") ?: ""
+
                         val decodedBytes = Base64.decode(
                             payloadBase64,
                             Base64.DEFAULT
@@ -63,9 +66,15 @@ fun JournalListContainer(
 
                         val json = String(decodedBytes)
 
-                        Gson().fromJson(
+                        val payload = Gson().fromJson(
                             json,
-                            JournalPayload::class.java
+                            JournalPagePayload::class.java
+                        )
+
+                        JournalEntry(
+                            journalId = journalId,
+                            journalName = journalName,
+                            payload = payload
                         )
 
                     } catch (e: Exception) {

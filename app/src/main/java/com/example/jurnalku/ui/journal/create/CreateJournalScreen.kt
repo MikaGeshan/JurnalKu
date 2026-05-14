@@ -48,6 +48,8 @@ import com.example.jurnalku.ui.components.canvas.DrawPath
 fun CreateJournalScreen(
     onBackToEntries: () -> Unit,
     onCancelCreateJournal: () -> Unit,
+    showCanvas: Boolean,
+    onPaperSelected: (String, Color) -> Unit,
     onSave: (
         text: String,
         paths: List<DrawPath>,
@@ -64,7 +66,6 @@ fun CreateJournalScreen(
 
     var selectedColor by remember { mutableStateOf(Color.White) }
     var selectedType by remember { mutableStateOf("Blank") }
-    var showCanvas by remember { mutableStateOf(false) }
 
     if (showCanvas) {
         CustomCanvas(
@@ -182,7 +183,7 @@ fun CreateJournalScreen(
                                 .weight(1f)
                                 .clickable {
                                     selectedType = type
-                                    showCanvas = true
+                                    onPaperSelected(type, selectedColor)
                                 }
                         ) {
 

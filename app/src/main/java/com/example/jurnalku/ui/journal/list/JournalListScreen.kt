@@ -47,13 +47,13 @@ fun JournalListScreen(
     onNavigateCreateJournal: () -> Unit,
     getListJournal: (
         String,
-        (List<JournalPayload>) -> Unit,
+        (List<JournalEntry>) -> Unit,
         (Exception) -> Unit
     ) -> Unit
 ) {
 
     var journals by remember {
-        mutableStateOf<List<JournalPayload>>(emptyList())
+        mutableStateOf<List<JournalEntry>>(emptyList())
     }
 
     LaunchedEffect(Unit) {
@@ -107,7 +107,8 @@ fun JournalListScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        journals.forEach { journal ->
+        journals.forEach { journalEntry ->
+            val journal = journalEntry.payload
             Box(
                 modifier = Modifier
                     .width(200.dp)
@@ -125,7 +126,11 @@ fun JournalListScreen(
                     modifier = Modifier.fillMaxSize()
                 )
                 Text(
-                    text = "Journal "+journal.paperType
+                    text = journalEntry.journalName,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(8.dp),
+                    fontWeight = FontWeight.Bold
                 )
             }
         }

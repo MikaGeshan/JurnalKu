@@ -7,12 +7,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Offset
 import com.example.jurnalku.ui.components.canvas.CustomCanvas
 import com.example.jurnalku.ui.components.canvas.DrawPath
-import com.example.jurnalku.ui.journal.list.JournalPayload
+import com.example.jurnalku.ui.journal.list.JournalPagePayload
 
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
 fun EditJournalScreen(
-    journal: JournalPayload,
+    journal: JournalPagePayload,
     onBack: () -> Unit,
     onSave: (
         text: String,

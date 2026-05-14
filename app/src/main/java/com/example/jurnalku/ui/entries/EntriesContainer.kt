@@ -5,7 +5,8 @@ import android.util.Log
 import androidx.compose.runtime.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.jurnalku.ui.journal.list.JournalPayload
+import com.example.jurnalku.ui.journal.list.JournalPagePayload
+import com.example.jurnalku.ui.journal.list.JournalEntry
 import com.example.jurnalku.ui.stores.AuthStore
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.gson.Gson
@@ -43,7 +44,7 @@ fun EntriesContainer(
 
     fun getListJournal(
         uid: String,
-        onSuccess: (List<JournalPayload>) -> Unit,
+        onSuccess: (List<JournalEntry>) -> Unit,
         onError: (Exception) -> Unit
     ) {
 
@@ -64,6 +65,9 @@ fun EntriesContainer(
                             document.getString("payload")
                                 ?: return@mapNotNull null
 
+                        val journalId = document.id
+                        val journalName = document.getString("journal_name") ?: ""
+
                         val decodedBytes = Base64.decode(
                             payloadBase64,
                             Base64.DEFAULT
@@ -71,9 +75,15 @@ fun EntriesContainer(
 
                         val json = String(decodedBytes)
 
-                        Gson().fromJson(
+                        val payload = Gson().fromJson(
                             json,
-                            JournalPayload::class.java
+                            JournalPagePayload::class.java
+                        )
+
+                        JournalEntry(
+                            journalId = journalId,
+                            journalName = journalName,
+                            payload = payload
                         )
 
                     } catch (e: Exception) {
@@ -100,7 +110,7 @@ fun EntriesContainer(
     }
 
     fun handleDeleteJournal(
-        contentId: String,
+        journalId: String,
         onSuccess: () -> Unit,
         onError: (Exception) -> Unit
     ) {
@@ -108,20 +118,11 @@ fun EntriesContainer(
 
         FirebaseFirestore.getInstance()
             .collection("journals")
-            .whereEqualTo("content_id", contentId)
-            .get()
-            .addOnSuccessListener { result ->
-                val batch = FirebaseFirestore.getInstance().batch()
-                result.documents.forEach { batch.delete(it.reference) }
-                batch.commit()
-                    .addOnSuccessListener {
-                        isLoading = false
-                        onSuccess()
-                    }
-                    .addOnFailureListener {
-                        isLoading = false
-                        onError(it)
-                    }
+            .document(journalId)
+            .delete()
+            .addOnSuccessListener {
+                isLoading = false
+                onSuccess()
             }
             .addOnFailureListener {
                 isLoading = false
@@ -137,8 +138,8 @@ fun EntriesContainer(
         onNavigateToLogin()
     }
 
-    val onEditJournal = { journal: JournalPayload ->
-        navController.navigate("edit_journal/${journal.contentId}")
+    val onEditJournal = { journal: JournalEntry ->
+        navController.navigate("edit_journal/${journal.journalId}")
     }
 
     EntriesScreen(

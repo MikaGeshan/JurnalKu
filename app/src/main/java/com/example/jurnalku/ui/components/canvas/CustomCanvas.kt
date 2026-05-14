@@ -148,12 +148,14 @@ fun CustomCanvas(
             onRedo = ::handleRedo,
             canUndo = paths.isNotEmpty(),
             canRedo = undonePaths.isNotEmpty(),
+            onExportJournal ={},
             onSave = ::handleSaveJournal,
             onPickImage = {
                 photoPickerLauncher.launch(
                     PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                 )
-            }
+            },
+            onCreateNewPage = {},
         )
 
         // default content

@@ -2,12 +2,19 @@ package com.example.jurnalku.ui.components.canvas
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -15,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.jurnalku.ui.components.icon.AppIconClass
 import com.example.jurnalku.ui.components.icon.ComposableIcon
+import com.example.jurnalku.ui.theme.JungleGreen
 
 @Composable
 fun CanvasHeader(
@@ -24,9 +32,13 @@ fun CanvasHeader(
     onRedo: () -> Unit,
     canUndo: Boolean,
     canRedo: Boolean,
+    onExportJournal: () -> Unit,
     onSave: () -> Unit,
+    onCreateNewPage: () -> Unit,
     onPickImage: () -> Unit
 ) {
+    var showMenu by remember { mutableStateOf(false) }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -56,7 +68,7 @@ fun CanvasHeader(
             }
         }
 
-        // Right corner: Undo, Redo, and Save
+        // Right corner: Undo, Redo, and Options
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -82,13 +94,42 @@ fun CanvasHeader(
                 )
             }
 
-            Text(
-                text = "Save",
-                modifier = Modifier
-                    .clickable { onSave() }
-                    .padding(start = 8.dp),
-                fontWeight = FontWeight.Bold
-            )
+            Box {
+                IconButton(onClick = { showMenu = !showMenu }) {
+                    ComposableIcon(
+                        icon = AppIconClass.More,
+                        tint = JungleGreen,
+                        size = 24.dp
+                    )
+                }
+
+                DropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Export") },
+                        onClick = {
+                            showMenu = false
+                            onExportJournal()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Save") },
+                        onClick = {
+                            showMenu = false
+                            onSave()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("New Page") },
+                        onClick = {
+                            showMenu = false
+                            onCreateNewPage()
+                        }
+                    )
+                }
+            }
         }
     }
 }

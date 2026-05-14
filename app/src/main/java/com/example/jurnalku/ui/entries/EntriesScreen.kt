@@ -25,7 +25,8 @@ import com.example.jurnalku.ui.components.CustomLoadingSpinner
 import com.example.jurnalku.ui.components.PaperTypePreview
 import com.example.jurnalku.ui.components.icon.AppIconClass
 import com.example.jurnalku.ui.components.icon.ComposableIcon
-import com.example.jurnalku.ui.journal.list.JournalPayload
+import com.example.jurnalku.ui.journal.list.JournalPagePayload
+import com.example.jurnalku.ui.journal.list.JournalEntry
 import com.example.jurnalku.ui.theme.EmptyStateText
 import com.example.jurnalku.ui.theme.Grey
 import com.example.jurnalku.ui.theme.JungleGreen
@@ -41,7 +42,7 @@ fun EntriesScreen(
     onNavigateCreateJournal: () -> Unit,
     getListJournal: (
         String,
-        (List<JournalPayload>) -> Unit,
+        (List<JournalEntry>) -> Unit,
         (Exception) -> Unit
     ) -> Unit,
     onDeleteJournal: (
@@ -49,11 +50,11 @@ fun EntriesScreen(
         () -> Unit,
         (Exception) -> Unit
     ) -> Unit,
-    onEditJournal: (JournalPayload) -> Unit,
+    onEditJournal: (JournalEntry) -> Unit,
     onLogOut: () -> Unit
 ) {
     var journals by remember {
-        mutableStateOf<List<JournalPayload>>(emptyList())
+        mutableStateOf<List<JournalEntry>>(emptyList())
     }
 
     var isSelectionMode by remember { mutableStateOf(false) }
@@ -210,9 +211,10 @@ fun EntriesScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
-            items(journals) { journal ->
+            items(journals) { journalEntry ->
 
-                val isSelected = selectedIds.contains(journal.contentId)
+                val journal = journalEntry.payload
+                val isSelected = selectedIds.contains(journalEntry.journalId)
 
                 Box(
                     modifier = Modifier
@@ -222,12 +224,12 @@ fun EntriesScreen(
                         .clickable {
                             if (isSelectionMode) {
                                 if (isSelected) {
-                                    selectedIds = selectedIds - journal.contentId
+                                    selectedIds = selectedIds - journalEntry.journalId
                                 } else {
-                                    selectedIds = selectedIds + journal.contentId
+                                    selectedIds = selectedIds + journalEntry.journalId
                                 }
                             } else {
-                                onEditJournal(journal)
+                                onEditJournal(journalEntry)
                             }
                         }
                 ) {
@@ -263,10 +265,11 @@ fun EntriesScreen(
                     }
 
                     Text(
-                        text = "Journal ${journal.paperType}",
+                        text = journalEntry.journalName,
                         modifier = Modifier
                             .align(Alignment.BottomStart)
-                            .padding(12.dp)
+                            .padding(12.dp),
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
