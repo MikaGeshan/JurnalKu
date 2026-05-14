@@ -102,35 +102,13 @@ fun CreateJournalContainer(
         )
     }
 
-    fun handleSaveJournal(
-        text: String,
-        paths: List<DrawPath>,
-        paperType: String,
-        paperColor: Color,
-        imageBase64: String?,
-        imageOffsetX: Float,
-        imageOffsetY: Float,
-        imageScale: Float,
-        imageRotation: Float
-    ) {
-        val payload = generateJournalPayload(
-            text = text,
-            paperType = paperType,
-            paperColor = paperColor,
-            paths = paths,
-            imageBase64 = imageBase64,
-            imageOffsetX = imageOffsetX,
-            imageOffsetY = imageOffsetY,
-            imageScale = imageScale,
-            imageRotation = imageRotation
-        )
-
+    fun handleSaveJournal(pages: List<JournalPagePayload>) {
         val uid = user?.uid ?: return
 
         val journalEntry = JournalEntry(
             journalId = UUID.randomUUID().toString(),
             journalName = journalName,
-            payload = payload
+            pages = pages
         )
 
         repository.saveJournal(

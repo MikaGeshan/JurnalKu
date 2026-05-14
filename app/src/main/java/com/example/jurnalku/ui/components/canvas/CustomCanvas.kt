@@ -6,19 +6,26 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import android.util.Log
 import android.net.Uri
@@ -41,41 +48,85 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.IntSize
 
+import com.example.jurnalku.ui.journal.list.JournalPagePayload
+import com.example.jurnalku.ui.journal.list.DrawPathPayload
+import com.example.jurnalku.ui.journal.list.DrawPointPayload
+import java.util.UUID
+
 val defaultColor = Color.Black
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
 fun CustomCanvas(
     paperColor: Color,
     paperType: String,
-    initialText: String = "",
-    initialPaths: List<DrawPath> = emptyList(),
-    initialImageBase64: String? = null,
-    initialImageOffsetX: Float = 0f,
-    initialImageOffsetY: Float = 0f,
-    initialImageScale: Float = 1f,
-    initialImageRotation: Float = 0f,
+    initialPages: List<JournalPagePayload> = emptyList(),
     onClose: () -> Unit,
-    onSave: (
-        text: String,
-        paths: List<DrawPath>,
-        paperType: String,
-        paperColor: Color,
-        imageBase64: String?,
-        imageOffsetX: Float,
-        imageOffsetY: Float,
-        imageScale: Float,
-        imageRotation: Float
-    ) -> Unit
+    onSave: (List<JournalPagePayload>) -> Unit
 ) {
     val context = LocalContext.current
-    var mode by remember { mutableStateOf(CanvasMode.TEXT) }
-    var text by remember { mutableStateOf(initialText) }
-    var selectedImageBase64 by remember { mutableStateOf(initialImageBase64) }
+    
+    // State for all pages
+    val pages = remember { 
+        mutableStateListOf<JournalPagePayload>().apply {
+            if (initialPages.isEmpty()) {
+                add(JournalPagePayload(
+                    contentId = UUID.randomUUID().toString(),
+                    paperType = paperType,
+                    paperColor = paperColor.value.toLong()
+                ))
+            } else {
+                addAll(initialPages)
+            }
+        }
+    }
+    var currentPageIndex by remember { mutableStateOf(0) }
 
-    // image transformation state
-    var imageOffset by remember { mutableStateOf(Offset(initialImageOffsetX, initialImageOffsetY)) }
-    var imageScale by remember { mutableStateOf(initialImageScale) }
-    var imageRotation by remember { mutableStateOf(initialImageRotation) }
+    // State for current page
+    var mode by remember { mutableStateOf(CanvasMode.TEXT) }
+    var text by remember { mutableStateOf("") }
+    var selectedImageBase64 by remember { mutableStateOf<String?>(null) }
+    var imageOffset by remember { mutableStateOf(Offset.Zero) }
+    var imageScale by remember { mutableStateOf(1f) }
+    var imageRotation by remember { mutableStateOf(0f) }
+    val paths = remember { mutableStateListOf<DrawPath>() }
+    val undonePaths = remember { mutableStateListOf<DrawPath>() }
+
+    // Load page data when index changes
+    LaunchedEffect(currentPageIndex) {
+        val currentPage = pages[currentPageIndex]
+        text = currentPage.text
+        selectedImageBase64 = currentPage.imageBase64
+        imageOffset = Offset(currentPage.imageOffsetX, currentPage.imageOffsetY)
+        imageScale = currentPage.imageScale
+        imageRotation = currentPage.imageRotation
+        paths.clear()
+        paths.addAll(currentPage.paths.map { payload ->
+            DrawPath(
+                points = payload.points.map { Offset(it.x, it.y) },
+                color = Color(payload.color.toULong()),
+                strokeWidth = payload.strokeWidth
+            )
+        })
+        undonePaths.clear()
+    }
+
+    fun saveCurrentPageState() {
+        pages[currentPageIndex] = pages[currentPageIndex].copy(
+            text = text,
+            imageBase64 = selectedImageBase64,
+            imageOffsetX = imageOffset.x,
+            imageOffsetY = imageOffset.y,
+            imageScale = imageScale,
+            imageRotation = imageRotation,
+            paths = paths.map { path ->
+                DrawPathPayload(
+                    points = path.points.map { DrawPointPayload(it.x, it.y) },
+                    color = path.color.value.toLong(),
+                    strokeWidth = path.strokeWidth
+                )
+            }
+        )
+    }
 
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
 
@@ -95,9 +146,6 @@ fun CustomCanvas(
     var selectedTool by remember { mutableStateOf(DrawTool.PEN) }
     var selectedColor by remember { mutableStateOf(defaultColor) }
 
-    val paths = remember { mutableStateListOf<DrawPath>().apply { addAll(initialPaths) } }
-    val undonePaths = remember { mutableStateListOf<DrawPath>() }
-
     fun handleUndo() {
         if (paths.isNotEmpty()) {
             undonePaths.add(paths.removeLast())
@@ -116,17 +164,18 @@ fun CustomCanvas(
     }
 
     fun handleSaveJournal() {
-        onSave(
-            text,
-            paths.toList(),
-            paperType,
-            paperColor,
-            selectedImageBase64,
-            imageOffset.x,
-            imageOffset.y,
-            imageScale,
-            imageRotation
-        )
+        saveCurrentPageState()
+        onSave(pages.toList())
+    }
+
+    fun handleCreateNewPage() {
+        saveCurrentPageState()
+        pages.add(JournalPagePayload(
+            contentId = UUID.randomUUID().toString(),
+            paperType = paperType,
+            paperColor = paperColor.value.toLong()
+        ))
+        currentPageIndex = pages.size - 1
     }
 
     val strokeWidth = when (selectedTool) {
@@ -155,8 +204,45 @@ fun CustomCanvas(
                     PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                 )
             },
-            onCreateNewPage = {},
+            onCreateNewPage = ::handleCreateNewPage,
         )
+
+        if (pages.size > 1) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = {
+                        if (currentPageIndex > 0) {
+                            saveCurrentPageState()
+                            currentPageIndex--
+                        }
+                    },
+                    enabled = currentPageIndex > 0
+                ) {
+                    Text("<", fontWeight = FontWeight.Bold)
+                }
+                Text(
+                    text = "Page ${currentPageIndex + 1} of ${pages.size}",
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+                IconButton(
+                    onClick = {
+                        if (currentPageIndex < pages.size - 1) {
+                            saveCurrentPageState()
+                            currentPageIndex++
+                        }
+                    },
+                    enabled = currentPageIndex < pages.size - 1
+                ) {
+                    Text(">", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
 
         // default content
         Box(

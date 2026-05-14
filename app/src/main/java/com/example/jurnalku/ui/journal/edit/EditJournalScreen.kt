@@ -12,40 +12,16 @@ import com.example.jurnalku.ui.journal.list.JournalPagePayload
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
 fun EditJournalScreen(
-    journal: JournalPagePayload,
+    pages: List<JournalPagePayload>,
     onBack: () -> Unit,
-    onSave: (
-        text: String,
-        paths: List<DrawPath>,
-        paperType: String,
-        paperColor: Color,
-        imageBase64: String?,
-        imageOffsetX: Float,
-        imageOffsetY: Float,
-        imageScale: Float,
-        imageRotation: Float
-    ) -> Unit
+    onSave: (List<JournalPagePayload>) -> Unit
 ) {
-    val initialPaths = remember(journal) {
-        journal.paths.map { pathPayload ->
-            DrawPath(
-                points = pathPayload.points.map { Offset(it.x, it.y) },
-                color = Color(pathPayload.color.toULong()),
-                strokeWidth = pathPayload.strokeWidth
-            )
-        }
-    }
+    val firstPage = pages.firstOrNull() ?: JournalPagePayload()
 
     CustomCanvas(
-        paperColor = Color(journal.paperColor.toULong()),
-        paperType = journal.paperType,
-        initialText = journal.text,
-        initialPaths = initialPaths,
-        initialImageBase64 = journal.imageBase64,
-        initialImageOffsetX = journal.imageOffsetX,
-        initialImageOffsetY = journal.imageOffsetY,
-        initialImageScale = journal.imageScale,
-        initialImageRotation = journal.imageRotation,
+        paperColor = Color(firstPage.paperColor.toULong()),
+        paperType = firstPage.paperType,
+        initialPages = pages,
         onClose = onBack,
         onSave = onSave
     )

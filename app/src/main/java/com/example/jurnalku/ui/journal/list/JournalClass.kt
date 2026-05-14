@@ -3,8 +3,10 @@ package com.example.jurnalku.ui.journal.list
 data class JournalEntry(
     val journalId: String = "",
     val journalName: String = "",
-    val payload: JournalPagePayload = JournalPagePayload()
-)
+    val pages: List<JournalPagePayload> = emptyList()
+) {
+    val payload: JournalPagePayload get() = pages.firstOrNull() ?: JournalPagePayload()
+}
 
 data class JournalPagePayload(
     val contentId: String = "",

@@ -41,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import com.example.jurnalku.ui.components.PaperTypePreview
 import com.example.jurnalku.ui.components.canvas.DrawPath
+import com.example.jurnalku.ui.journal.list.JournalPagePayload
 
 
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
@@ -50,17 +51,7 @@ fun CreateJournalScreen(
     onCancelCreateJournal: () -> Unit,
     showCanvas: Boolean,
     onPaperSelected: (String, Color) -> Unit,
-    onSave: (
-        text: String,
-        paths: List<DrawPath>,
-        paperType: String,
-        paperColor: Color,
-        imageBase64: String?,
-        imageOffsetX: Float,
-        imageOffsetY: Float,
-        imageScale: Float,
-        imageRotation: Float
-    ) -> Unit
+    onSave: (List<JournalPagePayload>) -> Unit
     )
 {
 
@@ -71,13 +62,7 @@ fun CreateJournalScreen(
         CustomCanvas(
             paperColor = selectedColor,
             paperType = selectedType,
-            initialText = "",
-            initialPaths = emptyList(),
-            initialImageBase64 = null,
-            initialImageOffsetX = 0f,
-            initialImageOffsetY = 0f,
-            initialImageScale = 1f,
-            initialImageRotation = 0f,
+            initialPages = emptyList(),
             onClose = onCancelCreateJournal,
             onSave = onSave
         )

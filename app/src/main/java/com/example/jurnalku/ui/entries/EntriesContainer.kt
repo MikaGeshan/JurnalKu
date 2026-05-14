@@ -61,29 +61,29 @@ fun EntriesContainer(
 
                     try {
 
-                        val payloadBase64 =
-                            document.getString("payload")
+                        val pagesBase64 =
+                            document.getString("pages")
                                 ?: return@mapNotNull null
 
                         val journalId = document.id
                         val journalName = document.getString("journal_name") ?: ""
 
                         val decodedBytes = Base64.decode(
-                            payloadBase64,
+                            pagesBase64,
                             Base64.DEFAULT
                         )
 
                         val json = String(decodedBytes)
-
-                        val payload = Gson().fromJson(
+                        val type = object : com.google.gson.reflect.TypeToken<List<JournalPagePayload>>() {}.type
+                        val pages = Gson().fromJson<List<JournalPagePayload>>(
                             json,
-                            JournalPagePayload::class.java
+                            type
                         )
 
                         JournalEntry(
                             journalId = journalId,
                             journalName = journalName,
-                            payload = payload
+                            pages = pages
                         )
 
                     } catch (e: Exception) {

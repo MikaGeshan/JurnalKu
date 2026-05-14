@@ -17,7 +17,7 @@ class JournalRepository {
         onError: (Exception) -> Unit
     ) {
 
-        val json = Gson().toJson(journalEntry.payload)
+        val json = Gson().toJson(journalEntry.pages)
 
         val base64 = Base64.encodeToString(
             json.toByteArray(),
@@ -30,7 +30,7 @@ class JournalRepository {
             "uid" to uid,
             "journal_id" to journalEntry.journalId,
             "journal_name" to journalEntry.journalName,
-            "payload" to base64,
+            "pages" to base64,
             "created_at" to FieldValue.serverTimestamp()
         )
 
@@ -47,16 +47,16 @@ class JournalRepository {
 
     fun updateJournal(
         journalId: String,
-        payload: JournalPagePayload,
+        pages: List<JournalPagePayload>,
         onSuccess: () -> Unit,
         onError: (Exception) -> Unit
     ) {
-        val json = Gson().toJson(payload)
+        val json = Gson().toJson(pages)
         val base64 = Base64.encodeToString(json.toByteArray(), Base64.DEFAULT)
 
         db.collection("journals")
             .document(journalId)
-            .update("payload", base64)
+            .update("pages", base64)
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { onError(it) }
     }
@@ -71,25 +71,26 @@ class JournalRepository {
             .get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
-                    val payloadBase64 = document.getString("payload")
+                    val pagesBase64 = document.getString("pages")
                     val journalName = document.getString("journal_name") ?: ""
-                    if (payloadBase64 != null) {
+                    if (pagesBase64 != null) {
                         try {
-                            val decodedBytes = Base64.decode(payloadBase64, Base64.DEFAULT)
+                            val decodedBytes = Base64.decode(pagesBase64, Base64.DEFAULT)
                             val json = String(decodedBytes)
-                            val payload = Gson().fromJson(json, JournalPagePayload::class.java)
+                            val type = object : com.google.gson.reflect.TypeToken<List<JournalPagePayload>>() {}.type
+                            val pages = Gson().fromJson<List<JournalPagePayload>>(json, type)
                             onSuccess(
                                 JournalEntry(
                                     journalId = journalId,
                                     journalName = journalName,
-                                    payload = payload
+                                    pages = pages
                                 )
                             )
                         } catch (e: Exception) {
                             onError(e)
                         }
                     } else {
-                        onError(Exception("Payload is null"))
+                        onError(Exception("Pages is null"))
                     }
                 } else {
                     onError(Exception("Journal not found"))

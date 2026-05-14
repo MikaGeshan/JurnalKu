@@ -19,7 +19,7 @@ fun EditJournalContainer(
     navController: NavController
 ) {
     val repository = remember { JournalRepository() }
-    var journalPayload by remember { mutableStateOf<JournalPagePayload?>(null) }
+    var pages by remember { mutableStateOf<List<JournalPagePayload>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var showUpdateSuccessDialog by remember { mutableStateOf(false) }
 
@@ -27,7 +27,7 @@ fun EditJournalContainer(
         repository.getJournal(
             journalId = journalId,
             onSuccess = {
-                journalPayload = it.payload
+                pages = it.pages
                 isLoading = false
             },
             onError = {
@@ -37,40 +37,10 @@ fun EditJournalContainer(
         )
     }
 
-    fun handleSave(
-        text: String,
-        paths: List<DrawPath>,
-        paperType: String,
-        paperColor: Color,
-        imageBase64: String?,
-        imageOffsetX: Float,
-        imageOffsetY: Float,
-        imageScale: Float,
-        imageRotation: Float
-    ) {
-        val currentPayload = journalPayload ?: return
-        
-        val updatedPayload = currentPayload.copy(
-            text = text,
-            paperType = paperType,
-            paperColor = paperColor.value.toLong(),
-            imageBase64 = imageBase64,
-            imageOffsetX = imageOffsetX,
-            imageOffsetY = imageOffsetY,
-            imageScale = imageScale,
-            imageRotation = imageRotation,
-            paths = paths.map { path ->
-                DrawPathPayload(
-                    points = path.points.map { DrawPointPayload(it.x, it.y) },
-                    color = path.color.value.toLong(),
-                    strokeWidth = path.strokeWidth
-                )
-            }
-        )
-
+    fun handleSave(updatedPages: List<JournalPagePayload>) {
         repository.updateJournal(
             journalId = journalId,
-            payload = updatedPayload,
+            pages = updatedPages,
             onSuccess = {
                 showUpdateSuccessDialog = true
             },
@@ -83,9 +53,9 @@ fun EditJournalContainer(
     if (isLoading) {
         // You can add a loading spinner here
     } else {
-        journalPayload?.let {
+        if (pages.isNotEmpty()) {
             EditJournalScreen(
-                journal = it,
+                pages = pages,
                 onBack = { navController.popBackStack() },
                 onSave = ::handleSave
             )
