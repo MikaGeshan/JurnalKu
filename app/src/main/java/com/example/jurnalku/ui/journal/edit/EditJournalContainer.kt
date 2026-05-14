@@ -11,6 +11,9 @@ import com.example.jurnalku.ui.journal.list.DrawPathPayload
 import com.example.jurnalku.ui.journal.list.DrawPointPayload
 import com.example.jurnalku.ui.journal.list.JournalPagePayload
 import com.example.jurnalku.ui.journal.list.JournalRepository
+import com.example.jurnalku.ui.journal.list.RecentPageEntry
+import com.example.jurnalku.ui.stores.AuthStore
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
@@ -19,16 +22,35 @@ fun EditJournalContainer(
     navController: NavController
 ) {
     val repository = remember { JournalRepository() }
+    val authStore: AuthStore = viewModel()
+    val user by authStore.user.collectAsState()
+
     var pages by remember { mutableStateOf<List<JournalPagePayload>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var showUpdateSuccessDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(journalId) {
+    LaunchedEffect(journalId, user) {
+        val uid = user?.uid ?: return@LaunchedEffect
         repository.getJournal(
             journalId = journalId,
-            onSuccess = {
-                pages = it.pages
+            onSuccess = { journal ->
+                pages = journal.pages
                 isLoading = false
+
+                // Save first page as recent for now
+                if (journal.pages.isNotEmpty()) {
+                    val firstPage = journal.pages.first()
+                    repository.saveRecentPage(
+                        uid = uid,
+                        recentPage = RecentPageEntry(
+                            journalId = journalId,
+                            journalName = journal.journalName,
+                            pageIndex = 0,
+                            paperType = firstPage.paperType,
+                            paperColor = firstPage.paperColor
+                        )
+                    )
+                }
             },
             onError = {
                 Log.e("EDIT_JOURNAL", it.message ?: "Error")

@@ -7,6 +7,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.jurnalku.ui.journal.list.JournalPagePayload
 import com.example.jurnalku.ui.journal.list.JournalEntry
+import com.example.jurnalku.ui.journal.list.RecentPageEntry
+import com.example.jurnalku.ui.journal.list.JournalRepository
 import com.example.jurnalku.ui.stores.AuthStore
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.gson.Gson
@@ -22,6 +24,7 @@ fun EntriesContainer(
     val getUserName = user?.name?.split(" ")?.firstOrNull() ?: "User"
     val getUserUid = user?.uid ?: return
 
+    val repository = remember { JournalRepository() }
     var isLoading by remember { mutableStateOf(false) }
 
     val onNavigateCreateJournal = {
@@ -41,6 +44,14 @@ fun EntriesContainer(
     }
 
 //    fun handleDeleteJournal
+
+    fun getRecentPages(
+        uid: String,
+        onSuccess: (List<RecentPageEntry>) -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        repository.getRecentPages(uid, onSuccess, onError)
+    }
 
     fun getListJournal(
         uid: String,
@@ -150,6 +161,7 @@ fun EntriesContainer(
         onMoodSelected = ::handleMoodSelect,
         onNavigateCreateJournal = onNavigateCreateJournal,
         getListJournal = ::getListJournal,
+        getRecentPages = ::getRecentPages,
         onDeleteJournal = ::handleDeleteJournal,
         onEditJournal = onEditJournal,
         onLogOut = ::handleLogout

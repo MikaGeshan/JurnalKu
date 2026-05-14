@@ -19,6 +19,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.jurnalku.ui.components.canvas.DrawPath
 import com.example.jurnalku.ui.journal.list.JournalRepository
+import com.example.jurnalku.ui.journal.list.RecentPageEntry
 import com.example.jurnalku.ui.stores.AuthStore
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
@@ -117,6 +118,22 @@ fun CreateJournalContainer(
 
             onSuccess = {
                 Log.d("FIRESTORE", "SAVE SUCCESS")
+
+                // Save as recent page
+                if (pages.isNotEmpty()) {
+                    val firstPage = pages.first()
+                    repository.saveRecentPage(
+                        uid = uid,
+                        recentPage = RecentPageEntry(
+                            journalId = journalEntry.journalId,
+                            journalName = journalEntry.journalName,
+                            pageIndex = 0,
+                            paperType = firstPage.paperType,
+                            paperColor = firstPage.paperColor
+                        )
+                    )
+                }
+
                 showSuccessDialog = true
             },
 

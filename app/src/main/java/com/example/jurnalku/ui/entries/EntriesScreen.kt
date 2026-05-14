@@ -27,6 +27,7 @@ import com.example.jurnalku.ui.components.icon.AppIconClass
 import com.example.jurnalku.ui.components.icon.ComposableIcon
 import com.example.jurnalku.ui.journal.list.JournalPagePayload
 import com.example.jurnalku.ui.journal.list.JournalEntry
+import com.example.jurnalku.ui.journal.list.RecentPageEntry
 import com.example.jurnalku.ui.theme.EmptyStateText
 import com.example.jurnalku.ui.theme.Grey
 import com.example.jurnalku.ui.theme.JungleGreen
@@ -45,6 +46,11 @@ fun EntriesScreen(
         (List<JournalEntry>) -> Unit,
         (Exception) -> Unit
     ) -> Unit,
+    getRecentPages: (
+        String,
+        (List<RecentPageEntry>) -> Unit,
+        (Exception) -> Unit
+    ) -> Unit,
     onDeleteJournal: (
         String,
         () -> Unit,
@@ -55,6 +61,10 @@ fun EntriesScreen(
 ) {
     var journals by remember {
         mutableStateOf<List<JournalEntry>>(emptyList())
+    }
+
+    var recentPages by remember {
+        mutableStateOf<List<RecentPageEntry>>(emptyList())
     }
 
     var isSelectionMode by remember { mutableStateOf(false) }
@@ -71,6 +81,19 @@ fun EntriesScreen(
             { error ->
                 Log.e(
                     "JOURNAL",
+                    error.message ?: "ERROR"
+                )
+            }
+        )
+
+        getRecentPages(
+            uid,
+            { result ->
+                recentPages = result
+            },
+            { error ->
+                Log.e(
+                    "RECENT_PAGES",
                     error.message ?: "ERROR"
                 )
             }
@@ -288,7 +311,51 @@ fun EntriesScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        EmptyStateText("No recent pages")
+        if (recentPages.isEmpty()) {
+            EmptyStateText("No recent pages")
+        } else {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(recentPages) { recentEntry ->
+                    Column(
+                        modifier = Modifier
+                            .width(120.dp)
+                            .clickable {
+                                onEditJournal(
+                                    JournalEntry(
+                                        journalId = recentEntry.journalId,
+                                        journalName = recentEntry.journalName
+                                    )
+                                )
+                            }
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(160.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                        ) {
+                            PaperTypePreview(
+                                type = recentEntry.paperType,
+                                color = Color(recentEntry.paperColor.toULong()),
+                                isSelected = false,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text(
+                            text = recentEntry.journalName,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1
+                        )
+                    }
+                }
+            }
+        }
     }
         if (isLoading) {
         CustomLoadingSpinner(isOverlay = true)

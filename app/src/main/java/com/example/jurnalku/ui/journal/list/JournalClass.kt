@@ -31,3 +31,12 @@ data class DrawPathPayload(
     val color: Long = 0L,
     val strokeWidth: Float = 0f
 )
+
+data class RecentPageEntry(
+    val journalId: String = "",
+    val journalName: String = "",
+    val pageIndex: Int = 0,
+    val paperType: String = "",
+    val paperColor: Long = 0L,
+    val timestamp: Long = 0L
+)
