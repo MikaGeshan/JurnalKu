@@ -26,6 +26,7 @@ fun EditJournalContainer(
     val user by authStore.user.collectAsState()
 
     var pages by remember { mutableStateOf<List<JournalPagePayload>>(emptyList()) }
+    var journalName by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(true) }
     var showUpdateSuccessDialog by remember { mutableStateOf(false) }
 
@@ -35,6 +36,7 @@ fun EditJournalContainer(
             journalId = journalId,
             onSuccess = { journal ->
                 pages = journal.pages
+                journalName = journal.journalName
                 isLoading = false
 
                 // Save first page as recent for now
@@ -47,7 +49,14 @@ fun EditJournalContainer(
                             journalName = journal.journalName,
                             pageIndex = 0,
                             paperType = firstPage.paperType,
-                            paperColor = firstPage.paperColor
+                            paperColor = firstPage.paperColor,
+                            text = firstPage.text,
+                            paths = firstPage.paths,
+                            imageBase64 = firstPage.imageBase64,
+                            imageOffsetX = firstPage.imageOffsetX,
+                            imageOffsetY = firstPage.imageOffsetY,
+                            imageScale = firstPage.imageScale,
+                            imageRotation = firstPage.imageRotation
                         )
                     )
                 }
@@ -60,10 +69,32 @@ fun EditJournalContainer(
     }
 
     fun handleSave(updatedPages: List<JournalPagePayload>) {
+        val uid = user?.uid ?: return
         repository.updateJournal(
             journalId = journalId,
             pages = updatedPages,
             onSuccess = {
+                // Update recent page info when saving
+                if (updatedPages.isNotEmpty()) {
+                    val firstPage = updatedPages.first()
+                    repository.saveRecentPage(
+                        uid = uid,
+                        recentPage = RecentPageEntry(
+                            journalId = journalId,
+                            journalName = journalName,
+                            pageIndex = 0,
+                            paperType = firstPage.paperType,
+                            paperColor = firstPage.paperColor,
+                            text = firstPage.text,
+                            paths = firstPage.paths,
+                            imageBase64 = firstPage.imageBase64,
+                            imageOffsetX = firstPage.imageOffsetX,
+                            imageOffsetY = firstPage.imageOffsetY,
+                            imageScale = firstPage.imageScale,
+                            imageRotation = firstPage.imageRotation
+                        )
+                    )
+                }
                 showUpdateSuccessDialog = true
             },
             onError = {

@@ -129,7 +129,14 @@ fun CreateJournalContainer(
                             journalName = journalEntry.journalName,
                             pageIndex = 0,
                             paperType = firstPage.paperType,
-                            paperColor = firstPage.paperColor
+                            paperColor = firstPage.paperColor,
+                            text = firstPage.text,
+                            paths = firstPage.paths,
+                            imageBase64 = firstPage.imageBase64,
+                            imageOffsetX = firstPage.imageOffsetX,
+                            imageOffsetY = firstPage.imageOffsetY,
+                            imageScale = firstPage.imageScale,
+                            imageRotation = firstPage.imageRotation
                         )
                     )
                 }

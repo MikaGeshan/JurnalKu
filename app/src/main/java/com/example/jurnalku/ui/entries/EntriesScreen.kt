@@ -6,8 +6,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,10 +24,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.jurnalku.ui.components.CustomLoadingSpinner
+import com.example.jurnalku.ui.components.PagePreview
 import com.example.jurnalku.ui.components.PaperTypePreview
 import com.example.jurnalku.ui.components.icon.AppIconClass
 import com.example.jurnalku.ui.components.icon.ComposableIcon
-import com.example.jurnalku.ui.journal.list.JournalPagePayload
 import com.example.jurnalku.ui.journal.list.JournalEntry
 import com.example.jurnalku.ui.journal.list.RecentPageEntry
 import com.example.jurnalku.ui.theme.EmptyStateText
@@ -103,6 +105,7 @@ fun EntriesScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 20.dp)
     ) {
 
@@ -318,9 +321,11 @@ fun EntriesScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(recentPages) { recentEntry ->
-                    Column(
+                    Box(
                         modifier = Modifier
-                            .width(120.dp)
+                            .width(160.dp)
+                            .height(240.dp)
+                            .clip(RoundedCornerShape(12.dp))
                             .clickable {
                                 onEditJournal(
                                     JournalEntry(
@@ -330,27 +335,17 @@ fun EntriesScreen(
                                 )
                             }
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(160.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                        ) {
-                            PaperTypePreview(
-                                type = recentEntry.paperType,
-                                color = Color(recentEntry.paperColor.toULong()),
-                                isSelected = false,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(4.dp))
+                        PagePreview(
+                            recentPage = recentEntry,
+                            modifier = Modifier.fillMaxSize()
+                        )
 
                         Text(
                             text = recentEntry.journalName,
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Medium,
-                            maxLines = 1
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(12.dp),
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }

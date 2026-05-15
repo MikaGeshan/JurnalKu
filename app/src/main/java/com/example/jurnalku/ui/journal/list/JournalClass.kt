@@ -38,5 +38,12 @@ data class RecentPageEntry(
     val pageIndex: Int = 0,
     val paperType: String = "",
     val paperColor: Long = 0L,
+    val text: String = "",
+    val paths: List<DrawPathPayload> = emptyList(),
+    val imageBase64: String? = null,
+    val imageOffsetX: Float = 0f,
+    val imageOffsetY: Float = 0f,
+    val imageScale: Float = 1f,
+    val imageRotation: Float = 0f,
     val timestamp: Long = 0L
 )
