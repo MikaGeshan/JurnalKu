@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import android.util.Log
 import android.net.Uri
 import android.graphics.Bitmap
@@ -43,6 +44,7 @@ import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -52,6 +54,18 @@ import com.example.jurnalku.ui.journal.list.JournalPagePayload
 import com.example.jurnalku.ui.journal.list.DrawPathPayload
 import com.example.jurnalku.ui.journal.list.DrawPointPayload
 import java.util.UUID
+import android.graphics.Matrix
+import android.graphics.Paint
+import android.graphics.Path as AndroidPath
+import android.content.ContentValues
+import android.provider.MediaStore
+import android.os.Environment
+import android.widget.Toast
+import android.text.TextPaint
+import android.text.StaticLayout
+import android.text.Layout
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.platform.LocalDensity
 
 val defaultColor = Color.Black
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
@@ -129,6 +143,145 @@ fun CustomCanvas(
     }
 
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
+    val density = LocalDensity.current
+
+    fun exportPageToJpg() {
+        if (canvasSize.width == 0 || canvasSize.height == 0) return
+
+        val bitmap = Bitmap.createBitmap(canvasSize.width, canvasSize.height, Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(bitmap)
+        val paint = Paint().apply { isAntiAlias = true }
+
+        // 1. Background
+        canvas.drawColor(paperColor.toArgb())
+
+        // 2. Pattern
+        val lineColor = Color.Gray.copy(alpha = 0.3f).toArgb()
+        paint.color = lineColor
+        paint.strokeWidth = 2f
+
+        with(density) {
+            when (paperType) {
+                "Lined" -> {
+                    val spacing = 24.dp.toPx()
+                    var y = spacing
+                    while (y < canvasSize.height) {
+                        canvas.drawLine(0f, y, canvasSize.width.toFloat(), y, paint)
+                        y += spacing
+                    }
+                    paint.color = Color.Red.copy(alpha = 0.3f).toArgb()
+                    canvas.drawLine(80.dp.toPx(), 0f, 80.dp.toPx(), canvasSize.height.toFloat(), paint)
+                }
+                "Grid" -> {
+                    val spacing = 24.dp.toPx()
+                    var y = 0f
+                    while (y < canvasSize.height) {
+                        canvas.drawLine(0f, y, canvasSize.width.toFloat(), y, paint)
+                        y += spacing
+                    }
+                    var x = 0f
+                    while (x < canvasSize.width) {
+                        canvas.drawLine(x, 0f, x, canvasSize.height.toFloat(), paint)
+                        x += spacing
+                    }
+                }
+                "Dot Grid" -> {
+                    val spacing = 16.dp.toPx()
+                    var y = spacing / 2
+                    while (y < canvasSize.height) {
+                        var x = spacing / 2
+                        while (x < canvasSize.width) {
+                            canvas.drawCircle(x, y, 2.dp.toPx(), paint)
+                            x += spacing
+                        }
+                        y += spacing
+                    }
+                }
+            }
+        }
+
+        // 3. Image
+        selectedImageBase64?.let { base64 ->
+            try {
+                val bytes = Base64.decode(base64, Base64.DEFAULT)
+                val imgBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                if (imgBitmap != null) {
+                    val matrix = Matrix()
+
+                    val scaleW = canvasSize.width.toFloat() / imgBitmap.width
+                    val scaleH = canvasSize.height.toFloat() / imgBitmap.height
+                    val baseScale = minOf(scaleW, scaleH)
+
+                    val centerX = canvasSize.width / 2f
+                    val centerY = canvasSize.height / 2f
+
+                    matrix.postTranslate(-imgBitmap.width / 2f, -imgBitmap.height / 2f)
+                    matrix.postScale(baseScale * imageScale, baseScale * imageScale)
+                    matrix.postRotate(imageRotation)
+                    matrix.postTranslate(centerX + imageOffset.x, centerY + imageOffset.y)
+
+                    canvas.drawBitmap(imgBitmap, matrix, Paint().apply { isAntiAlias = true })
+                }
+            } catch (e: Exception) {
+                Log.e("EXPORT_ERROR", "Failed to draw image", e)
+            }
+        }
+
+        // 4. Text
+        if (text.isNotEmpty()) {
+            val textPaint = TextPaint().apply {
+                isAntiAlias = true
+                color = android.graphics.Color.BLACK
+                textSize = with(density) { 16.sp.toPx() }
+            }
+            val padding = with(density) { 16.dp.toPx() }
+            val staticLayout = StaticLayout.Builder.obtain(text, 0, text.length, textPaint, canvasSize.width - (padding * 2).toInt())
+                .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+                .build()
+
+            canvas.save()
+            canvas.translate(padding, padding)
+            staticLayout.draw(canvas)
+            canvas.restore()
+        }
+
+        // 5. Drawings
+        paths.forEach { drawPath ->
+            paint.color = drawPath.color.toArgb()
+            paint.strokeWidth = drawPath.strokeWidth
+            paint.style = Paint.Style.STROKE
+            paint.strokeCap = Paint.Cap.ROUND
+            paint.strokeJoin = Paint.Join.ROUND
+
+            val path = AndroidPath()
+            drawPath.points.forEachIndexed { i, pt ->
+                if (i == 0) path.moveTo(pt.x, pt.y)
+                else path.lineTo(pt.x, pt.y)
+            }
+            canvas.drawPath(path, paint)
+        }
+
+        // Save to MediaStore
+        try {
+            val filename = "Journal_${UUID.randomUUID()}.jpg"
+            val contentValues = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
+                put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
+            }
+
+            val uri = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+            uri?.let {
+                context.contentResolver.openOutputStream(it)?.use { outputStream ->
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream)
+                    Toast.makeText(context, "Page exported to Gallery", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("EXPORT_ERROR", "Failed to save image", e)
+            Toast.makeText(context, "Export failed", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
@@ -197,7 +350,7 @@ fun CustomCanvas(
             onRedo = ::handleRedo,
             canUndo = paths.isNotEmpty(),
             canRedo = undonePaths.isNotEmpty(),
-            onExportJournal ={},
+            onExportJournal = ::exportPageToJpg,
             onSave = ::handleSaveJournal,
             onPickImage = {
                 photoPickerLauncher.launch(
