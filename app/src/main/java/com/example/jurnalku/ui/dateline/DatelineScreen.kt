@@ -1,7 +1,7 @@
 package com.example.jurnalku.ui.dateline
 
-import MoodCounter
-import MoodData
+import com.example.jurnalku.ui.components.MoodCounter
+import com.example.jurnalku.ui.components.MoodData
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height

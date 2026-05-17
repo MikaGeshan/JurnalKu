@@ -73,6 +73,10 @@ fun EntriesScreen(
     var selectedIds by remember { mutableStateOf(setOf<String>()) }
     var refreshTrigger by remember { mutableStateOf(0) }
 
+    var showConfetti by remember { mutableStateOf(false) }
+    var showMoodPopup by remember { mutableStateOf(false) }
+    var lastSelectedIcon by remember { mutableStateOf<AppIconClass?>(null) }
+
     LaunchedEffect(refreshTrigger) {
 
         getListJournal(
@@ -102,12 +106,13 @@ fun EntriesScreen(
         )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 20.dp)
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 20.dp)
+        ) {
 
         // HEADER
         Row(
@@ -210,7 +215,12 @@ fun EntriesScreen(
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.clickable { onMoodSelected(mood) }
+                    modifier = Modifier.clickable {
+                        lastSelectedIcon = mood.icon
+                        showConfetti = true
+                        showMoodPopup = true
+                        onMoodSelected(mood)
+                    }
                 ) {
                     Box(
                         contentAlignment = Alignment.Center,
@@ -353,6 +363,23 @@ fun EntriesScreen(
         }
     }
         if (isLoading) {
-        CustomLoadingSpinner(isOverlay = true)
+            CustomLoadingSpinner(isOverlay = true)
+        }
+
+        if (showConfetti) {
+            lastSelectedIcon?.let { icon ->
+                EmojiConfetti(icon = icon) {
+                    showConfetti = false
+                }
+            }
+        }
+
+        if (showMoodPopup) {
+            lastSelectedIcon?.let { icon ->
+                MoodPopup(icon = icon) {
+                    showMoodPopup = false
+                }
+            }
+        }
     }
 }
