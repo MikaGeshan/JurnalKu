@@ -1,6 +1,6 @@
 {
   "title": "Perceived Stress Scale (PSS-4)",
-  "description": "Dalam 1 bulan terakhir, seberapa sering Anda merasakan hal berikut?",
+  "description": "Dalam 1 bulan terakhir, seberapa sering kamu merasakan hal berikut?",
   "scale": {
     "type": "likert",
     "options": [
@@ -14,22 +14,22 @@
   "questions": [
     {
       "id": 1,
-      "text": "Seberapa sering Anda merasa tidak mampu mengendalikan hal-hal penting dalam hidup Anda?",
+      "text": "Seberapa sering kamu merasa tidak bisa mengendalikan hal-hal penting dalam hidupmu?",
       "reverse_scored": false
     },
     {
       "id": 2,
-      "text": "Seberapa sering Anda merasa yakin dengan kemampuan Anda dalam menangani masalah pribadi?",
+      "text": "Seberapa sering kamu merasa yakin dengan kemampuanmu dalam mengatasi masalah pribadi?",
       "reverse_scored": true
     },
     {
       "id": 3,
-      "text": "Seberapa sering Anda merasa segala sesuatu berjalan sesuai keinginan Anda?",
+      "text": "Seberapa sering kamu merasa segala sesuatu berjalan sesuai keinginanmu?",
       "reverse_scored": true
     },
     {
       "id": 4,
-      "text": "Seberapa sering Anda merasa kesulitan yang Anda hadapi menumpuk hingga Anda tidak dapat mengatasinya?",
+      "text": "Seberapa sering kamu merasa kesulitan menumpuk begitu banyak hingga kamu tidak sanggup mengatasinya?",
       "reverse_scored": false
     }
   ],
