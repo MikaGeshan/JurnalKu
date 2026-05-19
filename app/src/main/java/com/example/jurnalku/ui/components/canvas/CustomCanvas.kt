@@ -57,6 +57,7 @@ import java.util.UUID
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path as AndroidPath
+import android.graphics.pdf.PdfDocument
 import android.content.ContentValues
 import android.provider.MediaStore
 import android.os.Environment
@@ -145,11 +146,7 @@ fun CustomCanvas(
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
     val density = LocalDensity.current
 
-    fun exportPageToJpg() {
-        if (canvasSize.width == 0 || canvasSize.height == 0) return
-
-        val bitmap = Bitmap.createBitmap(canvasSize.width, canvasSize.height, Bitmap.Config.ARGB_8888)
-        val canvas = android.graphics.Canvas(bitmap)
+    fun drawFullContent(canvas: android.graphics.Canvas) {
         val paint = Paint().apply { isAntiAlias = true }
 
         // 1. Background
@@ -260,12 +257,21 @@ fun CustomCanvas(
             }
             canvas.drawPath(path, paint)
         }
+    }
 
-        // Save to MediaStore
+    fun exportPage() {
+        if (canvasSize.width == 0 || canvasSize.height == 0) return
+
+        val fileNameBase = "Journal_${UUID.randomUUID()}"
+
+        // --- Export to JPG ---
+        val bitmap = Bitmap.createBitmap(canvasSize.width, canvasSize.height, Bitmap.Config.ARGB_8888)
+        val bitmapCanvas = android.graphics.Canvas(bitmap)
+        drawFullContent(bitmapCanvas)
+
         try {
-            val filename = "Journal_${UUID.randomUUID()}.jpg"
             val contentValues = ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
+                put(MediaStore.MediaColumns.DISPLAY_NAME, "$fileNameBase.jpg")
                 put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
                 put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
             }
@@ -274,12 +280,40 @@ fun CustomCanvas(
             uri?.let {
                 context.contentResolver.openOutputStream(it)?.use { outputStream ->
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream)
-                    Toast.makeText(context, "Page exported to Gallery", Toast.LENGTH_SHORT).show()
                 }
             }
         } catch (e: Exception) {
-            Log.e("EXPORT_ERROR", "Failed to save image", e)
+            Log.e("EXPORT_ERROR", "Failed to save JPG", e)
+        }
+
+        // --- Export to PDF ---
+        val pdfDocument = PdfDocument()
+        val pageInfo = PdfDocument.PageInfo.Builder(canvasSize.width, canvasSize.height, 1).create()
+        val page = pdfDocument.startPage(pageInfo)
+        
+        drawFullContent(page.canvas)
+        
+        pdfDocument.finishPage(page)
+
+        try {
+            val contentValues = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, "$fileNameBase.pdf")
+                put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
+                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS)
+            }
+
+            val uri = context.contentResolver.insert(MediaStore.Files.getContentUri("external"), contentValues)
+            uri?.let {
+                context.contentResolver.openOutputStream(it)?.use { outputStream ->
+                    pdfDocument.writeTo(outputStream)
+                }
+            }
+            Toast.makeText(context, "Page exported as JPG and PDF", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Log.e("EXPORT_ERROR", "Failed to save PDF", e)
             Toast.makeText(context, "Export failed", Toast.LENGTH_SHORT).show()
+        } finally {
+            pdfDocument.close()
         }
     }
 
@@ -350,7 +384,7 @@ fun CustomCanvas(
             onRedo = ::handleRedo,
             canUndo = paths.isNotEmpty(),
             canRedo = undonePaths.isNotEmpty(),
-            onExportJournal = ::exportPageToJpg,
+            onExportJournal = ::exportPage,
             onSave = ::handleSaveJournal,
             onPickImage = {
                 photoPickerLauncher.launch(
