@@ -10,6 +10,7 @@ import com.example.jurnalku.ui.journal.list.JournalEntry
 import com.example.jurnalku.ui.journal.list.RecentPageEntry
 import com.example.jurnalku.ui.journal.list.JournalRepository
 import com.example.jurnalku.ui.stores.AuthStore
+import com.example.jurnalku.ui.stores.MoodStore
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.gson.Gson
 
@@ -20,30 +21,29 @@ fun EntriesContainer(
 ) {
 
     val authStore : AuthStore = viewModel()
+    val moodStore : MoodStore = viewModel()
     val user by authStore.user.collectAsState()
     val getUserName = user?.name?.split(" ")?.firstOrNull() ?: "User"
     val getUserUid = user?.uid ?: return
 
+    val selectedMood by moodStore.selectedMood.collectAsState()
+    val isMoodLoading by moodStore.isLoading.collectAsState()
+
     val repository = remember { JournalRepository() }
     var isLoading by remember { mutableStateOf(false) }
+
+    LaunchedEffect(getUserUid) {
+        moodStore.fetchTodayMood(getUserUid)
+    }
 
     val onNavigateCreateJournal = {
         navController.navigate("create_journal")
     }
 
-    var selectedMood by remember { mutableStateOf<MoodClass?>(null) }
-
     fun handleMoodSelect(mood: MoodClass) {
-        selectedMood = mood
-
-        val payload = mapOf(
-            "mood" to mood.key
-        )
-
-        Log.d("=== mood payload", payload.toString())
+        moodStore.saveMood(getUserUid, mood)
     }
 
-//    fun handleDeleteJournal
 
     fun getRecentPages(
         uid: String,
@@ -156,7 +156,7 @@ fun EntriesContainer(
     EntriesScreen(
         uid = getUserUid,
         name = getUserName,
-        isLoading = isLoading,
+        isLoading = isLoading || isMoodLoading,
         selectedMood = selectedMood,
         onMoodSelected = ::handleMoodSelect,
         onNavigateCreateJournal = onNavigateCreateJournal,

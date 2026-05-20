@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -212,10 +213,11 @@ fun EntriesScreen(
             MoodClass.all.forEach { mood ->
 
                 val isSelected = selectedMood == mood
+                val isAnyMoodSelected = selectedMood != null
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.clickable {
+                    modifier = Modifier.clickable(enabled = !isAnyMoodSelected) {
                         lastSelectedIcon = mood.icon
                         showConfetti = true
                         showMoodPopup = true
@@ -226,6 +228,7 @@ fun EntriesScreen(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .size(if (isSelected) 64.dp else 56.dp)
+                            .alpha(if (isAnyMoodSelected && !isSelected) 0.5f else 1f)
                     ) {
                         ComposableIcon(
                             icon = mood.icon,
