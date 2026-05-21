@@ -12,6 +12,8 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import java.util.Locale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.jurnalku.ui.theme.White
@@ -19,7 +21,8 @@ import com.example.jurnalku.ui.theme.White
 data class MoodData(
     val label: String,
     val count: Int,
-    val color: Color
+    val color: Color,
+    val emoji: String
 )
 
 @Composable
@@ -107,27 +110,23 @@ fun MoodCounter(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-
-            val moodLegend = listOf(
-                "😄" to "Very Happy",
-                "🙂" to "Happy",
-                "😐" to "Sad",
-                "😟" to "Very Sad",
-                "😫" to "Awful"
-            )
-
-            moodLegend.forEach { (emoji, label) ->
-
+            moods.forEach { mood ->
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(text = emoji)
+                    Text(text = mood.emoji)
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = label,
+                        text = mood.label.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
                         textAlign = TextAlign.Center,
                         maxLines = 2,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                    Text(
+                        text = mood.count.toString(),
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }

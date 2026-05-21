@@ -34,7 +34,9 @@ import com.example.jurnalku.ui.theme.Black
 import com.example.jurnalku.ui.theme.Grey
 
 @Composable
-fun PSSForm() {
+fun PSSForm(
+    onScoreCalculated: (Int) -> Unit = {}
+) {
 
     val context = LocalContext.current
     val schema = remember { loadPSS(context) }
@@ -206,6 +208,8 @@ fun PSSForm() {
                     if (currentIndex < schema.questions.lastIndex) {
                         currentIndex++
                     } else {
+                        val score = calculatePSSScore(schema, answers)
+                        onScoreCalculated(score)
                         isFinished = true
                     }
                 },

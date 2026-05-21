@@ -1,10 +1,14 @@
 package com.example.jurnalku.ui.stores
 
 import android.app.Application
-import android.content.Context
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
+import com.example.jurnalku.ui.components.MoodData
+import com.example.jurnalku.ui.components.pss.StressCalculator
+import com.example.jurnalku.ui.components.pss.StressResult
 import com.example.jurnalku.ui.entries.MoodClass
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.text.SimpleDateFormat
@@ -12,7 +16,6 @@ import java.util.*
 
 class MoodStore(application: Application) : AndroidViewModel(application) {
     private val db = FirebaseFirestore.getInstance()
-    private val prefs = application.getSharedPreferences("mood_cache", Context.MODE_PRIVATE)
 
     private val _selectedMood = MutableStateFlow<MoodClass?>(null)
     val selectedMood: StateFlow<MoodClass?> = _selectedMood
@@ -23,46 +26,116 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
     private val _moodHistory = MutableStateFlow<Map<String, String>>(emptyMap())
     val moodHistory: StateFlow<Map<String, String>> = _moodHistory
 
-    init {
-        loadMoodHistory()
+    private val _weeklyMoodData = MutableStateFlow<List<MoodData>>(emptyList())
+    val weeklyMoodData: StateFlow<List<MoodData>> = _weeklyMoodData
+
+    private val _weeklyStressScore = MutableStateFlow(0.0)
+    val weeklyStressScore: StateFlow<Double> = _weeklyStressScore
+
+    private val _lastPSSScore = MutableStateFlow<Int?>(null)
+    val lastPSSScore: StateFlow<Int?> = _lastPSSScore
+
+    private val _finalStressScore = MutableStateFlow<Double?>(null)
+    val finalStressScore: StateFlow<Double?> = _finalStressScore
+
+    private val _stressResult = MutableStateFlow<StressResult?>(null)
+    val stressResult: StateFlow<StressResult?> = _stressResult
+
+    fun setPSSScore(score: Int) {
+        _lastPSSScore.value = score
+        updateFinalStressScore()
     }
 
-    fun loadMoodHistory() {
-        val history = prefs.all.mapValues { it.value.toString() }
-        _moodHistory.value = history
+    private fun updateFinalStressScore() {
+        val pssScore = _lastPSSScore.value
+        val cal = Calendar.getInstance()
+        cal.set(Calendar.DAY_OF_WEEK, cal.firstDayOfWeek)
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        
+        val moodValues = mutableListOf<Int>()
+        repeat(7) {
+            val dateStr = sdf.format(cal.time)
+            val moodKey = _moodHistory.value[dateStr]
+            MoodClass.all.find { it.key == moodKey }?.let {
+                moodValues.add(it.value)
+            }
+            cal.add(Calendar.DAY_OF_WEEK, 1)
+        }
+
+        if (pssScore != null) {
+            val result = StressCalculator.calculate(pssScore, moodValues)
+            _stressResult.value = result
+            _finalStressScore.value = result.finalScore
+            _weeklyStressScore.value = result.convertedMood
+        }
+    }
+
+    private fun calculateWeeklyStats() {
+        val cal = Calendar.getInstance()
+        cal.set(Calendar.DAY_OF_WEEK, cal.firstDayOfWeek)
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        
+        val weeklyMoods = mutableListOf<MoodClass>()
+        
+        repeat(7) {
+            val dateStr = sdf.format(cal.time)
+            val moodKey = _moodHistory.value[dateStr]
+            MoodClass.all.find { it.key == moodKey }?.let {
+                weeklyMoods.add(it)
+            }
+            cal.add(Calendar.DAY_OF_WEEK, 1)
+        }
+
+        val moodCounts = MoodClass.all.map { mood ->
+            MoodData(
+                label = mood.key,
+                count = weeklyMoods.count { it.key == mood.key },
+                color = mood.color,
+                emoji = mood.emoji
+            )
+        }
+        _weeklyMoodData.value = moodCounts
+
+        val moodValues = weeklyMoods.map { it.value }
+        if (moodValues.isNotEmpty()) {
+            val avg = StressCalculator.calculateAverageMood(moodValues)
+            _weeklyStressScore.value = StressCalculator.convertMoodToPSSScale(avg)
+        } else {
+            _weeklyStressScore.value = 0.0
+        }
+
+        updateFinalStressScore()
     }
 
     private fun getTodayDate(): String = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
-    private fun getWeekId(): String {
-        val cal = Calendar.getInstance()
-        val year = cal.get(Calendar.YEAR)
-        val week = cal.get(Calendar.WEEK_OF_YEAR)
-        return "${year}_W${week}"
-    }
-
     fun fetchTodayMood(uid: String) {
-        val today = getTodayDate()
-        val cachedMoodKey = prefs.getString(today, null)
-
-        if (cachedMoodKey != null) {
-            _selectedMood.value = MoodClass.all.find { it.key == cachedMoodKey }
-        } else {
-            // If not in cache, optionally check Firestore for today specifically 
-            // but since we sync weekly, we usually rely on cache for the current week.
-            val docId = "${uid}_${today}"
-            db.collection("mood_entries")
-                .document(docId)
-                .get()
-                .addOnSuccessListener { document ->
-                    if (document.exists()) {
-                        val moodKey = document.getString("mood_key")
-                        _selectedMood.value = MoodClass.all.find { it.key == moodKey }
-                        // Update cache
-                        moodKey?.let { prefs.edit().putString(today, it).apply() }
+        _isLoading.value = true
+        db.collection("mood_entries")
+            .whereEqualTo("uid", uid)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                val fullHistory = mutableMapOf<String, String>()
+                querySnapshot.documents.forEach { doc ->
+                    val moods = doc.get("moods") as? Map<String, Long> ?: emptyMap()
+                    moods.forEach { (date, value) ->
+                        val moodKey = MoodClass.all.find { it.value == value.toInt() }?.key
+                        if (moodKey != null) {
+                            fullHistory[date] = moodKey
+                        }
                     }
                 }
-        }
+                _moodHistory.value = fullHistory
+                calculateWeeklyStats()
+                
+                val today = getTodayDate()
+                _selectedMood.value = MoodClass.all.find { it.key == fullHistory[today] }
+                _isLoading.value = false
+                Log.d("MoodStore", "History fetched from Firestore: ${fullHistory.size} entries")
+            }
+            .addOnFailureListener {
+                _isLoading.value = false
+            }
     }
 
     fun saveMood(
@@ -72,59 +145,61 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
         onError: (Exception) -> Unit = {}
     ) {
         val today = getTodayDate()
-        
-        // 1. Save to Local Cache immediately
-        prefs.edit().putString(today, mood.key).apply()
-        _selectedMood.value = mood
-        loadMoodHistory() // Refresh history state
-
-        // 2. Logic to decide when to upload (e.g., Every day to keep it safe, but in one doc)
-        // Even if we update daily, using the WeekID as the Document ID keeps the DB "Light"
-        syncWeeklyMood(uid, onSuccess, onError)
-    }
-
-    private fun syncWeeklyMood(
-        uid: String,
-        onSuccess: () -> Unit = {},
-        onError: (Exception) -> Unit = {}
-    ) {
-        val weekId = getWeekId()
-        val docId = "${uid}_$weekId"
-        
-        // Collect all moods for the current week from cache
-        val cal = Calendar.getInstance()
-        cal.set(Calendar.DAY_OF_WEEK, cal.firstDayOfWeek)
-        val weeklyMoodMap = mutableMapOf<String, Int>()
-        
-        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        repeat(7) {
-            val dateStr = sdf.format(cal.time)
-            val moodKey = prefs.getString(dateStr, null)
-            val moodValue = MoodClass.all.find { it.key == moodKey }?.value
-            if (moodValue != null) {
-                weeklyMoodMap[dateStr] = moodValue
-            }
-            cal.add(Calendar.DAY_OF_WEEK, 1)
-        }
-
-        if (weeklyMoodMap.isEmpty()) return
-
-        val payload = mapOf(
-            "uid" to uid,
-            "week_id" to weekId,
-            "moods" to weeklyMoodMap,
-            "last_updated" to System.currentTimeMillis()
-        )
-
         _isLoading.value = true
-        db.collection("weekly_moods")
-            .document(docId)
-            .set(payload)
-            .addOnSuccessListener {
-                _isLoading.value = false
-                onSuccess()
+
+        // Fetch all batch documents for this user
+        db.collection("mood_entries")
+            .whereEqualTo("uid", uid)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                // Find the latest document by sorting in memory to avoid index requirements
+                val latestDoc = querySnapshot.documents
+                    .sortedByDescending { it.getLong("created_at") ?: 0L }
+                    .firstOrNull()
+
+                val moods = (latestDoc?.get("moods") as? Map<String, Long>)?.mapValues { it.value.toInt() }?.toMutableMap() ?: mutableMapOf()
+
+                // Check if we should update the existing latest batch or create a new one
+                if (latestDoc != null && (moods.containsKey(today) || moods.size < 7)) {
+                    moods[today] = mood.value
+                    latestDoc.reference.update(
+                        "moods", moods,
+                        "last_updated", System.currentTimeMillis()
+                    ).addOnSuccessListener {
+                        Log.d("MoodStore", "Mood updated in existing batch")
+                        _selectedMood.value = mood
+                        fetchTodayMood(uid) 
+                        _isLoading.value = false
+                        onSuccess()
+                    }.addOnFailureListener {
+                        Log.e("MoodStore", "Failed to update mood", it)
+                        _isLoading.value = false
+                        onError(it)
+                    }
+                } else {
+                    // Create a new batch document
+                    val newPayload = mapOf(
+                        "uid" to uid,
+                        "moods" to mapOf(today to mood.value),
+                        "created_at" to System.currentTimeMillis(),
+                        "last_updated" to System.currentTimeMillis()
+                    )
+                    db.collection("mood_entries").add(newPayload)
+                        .addOnSuccessListener {
+                            Log.d("MoodStore", "New mood batch created")
+                            _selectedMood.value = mood
+                            fetchTodayMood(uid)
+                            _isLoading.value = false
+                            onSuccess()
+                        }.addOnFailureListener {
+                            Log.e("MoodStore", "Failed to create new batch", it)
+                            _isLoading.value = false
+                            onError(it)
+                        }
+                }
             }
             .addOnFailureListener {
+                Log.e("MoodStore", "Failed to fetch batches", it)
                 _isLoading.value = false
                 onError(it)
             }
