@@ -22,20 +22,11 @@ import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.*
 
-val moodMap = mapOf(
-    LocalDate.of(2026, 4, 1) to "😄",
-    LocalDate.of(2026, 4, 2) to "🙂",
-    LocalDate.of(2026, 4, 3) to "😐",
-    LocalDate.of(2026, 4, 4) to "😟",
-    LocalDate.of(2026, 4, 5) to "😫",
-    LocalDate.of(2026, 4, 10) to "😄",
-    LocalDate.of(2026, 4, 15) to "🙂"
-)
-
 @Composable
 fun Calendar(
     selectedDate: LocalDate,
-    onDateSelected: (LocalDate) -> Unit
+    onDateSelected: (LocalDate) -> Unit,
+    moodHistory: Map<LocalDate, String> = emptyMap()
 ) {
     var currentMonth by remember { mutableStateOf(YearMonth.now()) }
 
@@ -122,7 +113,7 @@ fun Calendar(
                             } else {
 
                                 val date = currentMonth.atDay(day)
-                                val mood = moodMap[date]
+                                val moodEmoji = moodHistory[date]
 
                                 val isToday = date == today
                                 val isSelected = date == selectedDate
@@ -149,9 +140,9 @@ fun Calendar(
                                     ) {
 
                                         // mood history
-                                        if (mood != null) {
+                                        if (moodEmoji != null) {
                                             Text(
-                                                text = mood,
+                                                text = moodEmoji,
                                                 style = MaterialTheme.typography.bodySmall
                                             )
                                         }

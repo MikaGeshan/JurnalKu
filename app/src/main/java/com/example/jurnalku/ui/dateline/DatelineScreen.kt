@@ -10,21 +10,41 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.jurnalku.ui.components.Calendar
 import com.example.jurnalku.ui.components.CustomCard
 import com.example.jurnalku.ui.components.pss.PSSForm
+import com.example.jurnalku.ui.entries.MoodClass
+import com.example.jurnalku.ui.stores.MoodStore
 import com.example.jurnalku.ui.theme.Green
 import com.example.jurnalku.ui.theme.Red
 import com.example.jurnalku.ui.theme.Yellow
 import java.time.LocalDate
+import java.time.format.DateTimeParseException
 
 @Composable
 fun DatelineScreen() {
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    val moodStore: MoodStore = viewModel()
+    val moodHistoryRaw by moodStore.moodHistory.collectAsState()
+
+    // Map the raw history (String: String) to (LocalDate: Emoji)
+    val moodHistory = remember(moodHistoryRaw) {
+        moodHistoryRaw.mapNotNull { (dateStr, moodKey) ->
+            try {
+                val date = LocalDate.parse(dateStr)
+                val emoji = MoodClass.getEmoji(moodKey)
+                if (emoji != null) date to emoji else null
+            } catch (e: DateTimeParseException) {
+                null
+            }
+        }.toMap()
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -35,7 +55,8 @@ fun DatelineScreen() {
         item {
             Calendar(
                 selectedDate = selectedDate,
-                onDateSelected = { selectedDate = it }
+                onDateSelected = { selectedDate = it },
+                moodHistory = moodHistory
             )
         }
 
@@ -60,21 +81,5 @@ fun DatelineScreen() {
                 PSSForm()
             }
         }
-
-//        item {
-//            Spacer(modifier = Modifier.height(16.dp))
-//
-//            CustomCard(title = "Insight") {
-//                // kosong dulu
-//            }
-//        }
-
-//        item {
-//            Spacer(modifier = Modifier.height(16.dp))
-//
-//            CustomCard(title = "Notes") {
-//                // kosong dulu
-//            }
-//        }
     }
 }

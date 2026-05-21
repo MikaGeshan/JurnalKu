@@ -20,6 +20,18 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
+    private val _moodHistory = MutableStateFlow<Map<String, String>>(emptyMap())
+    val moodHistory: StateFlow<Map<String, String>> = _moodHistory
+
+    init {
+        loadMoodHistory()
+    }
+
+    fun loadMoodHistory() {
+        val history = prefs.all.mapValues { it.value.toString() }
+        _moodHistory.value = history
+    }
+
     private fun getTodayDate(): String = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
     private fun getWeekId(): String {
@@ -64,6 +76,7 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
         // 1. Save to Local Cache immediately
         prefs.edit().putString(today, mood.key).apply()
         _selectedMood.value = mood
+        loadMoodHistory() // Refresh history state
 
         // 2. Logic to decide when to upload (e.g., Every day to keep it safe, but in one doc)
         // Even if we update daily, using the WeekID as the Document ID keeps the DB "Light"
