@@ -45,6 +45,13 @@ object StressCalculator {
     }
 
     /**
+     * Calculates total valid moods.
+     */
+    fun calculateTotalMoods(moodValues: List<Int>): Int {
+        return moodValues.filter { it in 1..4 }.size
+    }
+
+    /**
      * Normalizes mood (1-4) to PSS scale (0-16).
      */
     fun convertMoodToPSSScale(averageMood: Double): Double {

@@ -17,6 +17,10 @@ import java.util.Locale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.jurnalku.ui.components.pss.StressResult
+import com.example.jurnalku.ui.theme.Green
+import com.example.jurnalku.ui.theme.Orange
+import com.example.jurnalku.ui.theme.Red
 import com.example.jurnalku.ui.theme.White
 
 data class MoodData(
@@ -29,7 +33,7 @@ data class MoodData(
 @Composable
 fun MoodCounter(
     moods: List<MoodData>,
-    averageMood: Double? = null
+    stressResult: StressResult? = null
 ) {
     val total = moods.sumOf { it.count }
 
@@ -57,18 +61,23 @@ fun MoodCounter(
                 )
             }
             
-            if (averageMood != null) {
+            if (stressResult != null) {
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "Avg Mood",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.Gray
-                    )
-                    Text(
-                        text = "%.2f".format(averageMood),
+                        text = stressResult.stressLevel,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.ExtraBold,
-                        color = com.example.jurnalku.ui.theme.JungleGreen
+                        color = when (stressResult.stressLevel) {
+                            "Stress Rendah" -> Green
+                            "Stress Sedang" -> Orange
+                            "Stress Tinggi" -> Red
+                            else -> MaterialTheme.colorScheme.primary
+                        }
+                    )
+                    Text(
+                        text = "Avg Mood: %.2f".format(stressResult.averageMood),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.Gray
                     )
                 }
             }
