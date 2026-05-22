@@ -79,8 +79,8 @@ fun MoodCounter(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(140.dp), // Height adjusted for semi-circle
-            contentAlignment = Alignment.BottomCenter // Align to bottom for semi-circle
+                .height(140.dp),
+            contentAlignment = Alignment.BottomCenter
         ) {
             Canvas(
                 modifier = Modifier.fillMaxSize()

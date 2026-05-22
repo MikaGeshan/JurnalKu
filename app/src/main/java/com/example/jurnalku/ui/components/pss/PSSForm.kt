@@ -18,6 +18,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,14 +36,22 @@ import com.example.jurnalku.ui.theme.Grey
 
 @Composable
 fun PSSForm(
+    lastTakenDate: Long? = null,
     onScoreCalculated: (Int) -> Unit = {}
 ) {
-
     val context = LocalContext.current
     val schema = remember { loadPSS(context) }
 
     var currentIndex by remember { mutableStateOf(0) }
     var isFinished by remember { mutableStateOf(false) }
+
+    val canTakeTest = remember(lastTakenDate) {
+        if (lastTakenDate == null) true
+        else {
+            val thirtyDaysInMillis = 30L * 24 * 60 * 60 * 1000
+            System.currentTimeMillis() - lastTakenDate > thirtyDaysInMillis
+        }
+    }
 
     val answers = remember {
         mutableStateListOf<Int?>().apply {
@@ -79,18 +88,18 @@ fun PSSForm(
                 color = if (score >= 12) Color.Red else if (score >= 6) Color(0xFFFFA500) else Color(0xFF4CAF50)
             )
             Spacer(modifier = Modifier.height(24.dp))
-            Button(
-                onClick = {
-                    currentIndex = 0
-                    answers.clear()
-                    repeat(schema.questions.size) { answers.add(null) }
-                    isFinished = false
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Black)
-            ) {
-                Text("Ulangi Tes", color = Color.White)
-            }
+            Text(
+                text = "Penilaian Anda telah disimpan. Anda dapat mengambil penilaian kembali dalam 30 hari.",
+                textAlign = TextAlign.Center,
+                fontSize = 12.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
         }
+        return
+    }
+
+    if (!canTakeTest) {
         return
     }
 

@@ -38,6 +38,7 @@ fun DatelineScreen() {
     val weeklyAverageMood by moodStore.weeklyAverageMood.collectAsState()
     val weeklyStressScore by moodStore.weeklyStressScore.collectAsState()
     val lastPSSScore by moodStore.lastPSSScore.collectAsState()
+    val lastPSSDate by moodStore.lastPSSDate.collectAsState()
     val finalStressScore by moodStore.finalStressScore.collectAsState()
     val stressResult by moodStore.stressResult.collectAsState()
 
@@ -45,14 +46,14 @@ fun DatelineScreen() {
         uid?.let { moodStore.fetchTodayMood(it) }
     }
 
-    LaunchedEffect(selectedDate, moodHistoryRaw) {
+    LaunchedEffect(selectedDate, moodHistoryRaw, lastPSSScore) {
         if (uid != null && moodHistoryRaw.isNotEmpty()) {
             val date = Date.from(selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
             moodStore.calculateWeeklyStats(date)
         }
     }
 
-    // Map the raw history (String: String) to (LocalDate: Emoji)
+
     val moodHistory = remember(moodHistoryRaw) {
         moodHistoryRaw.mapNotNull { (dateStr, moodKey) ->
             try {
@@ -64,6 +65,9 @@ fun DatelineScreen() {
             }
         }.toMap()
     }
+
+    val totalMoods = moodHistory.size
+    val canTakePSS = totalMoods >= 30
 
     LazyColumn(
         modifier = Modifier
@@ -139,10 +143,12 @@ fun DatelineScreen() {
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.secondary
                         )
-                        Text(
-                            text = "Complete the PSS-4 below to see your combined stress insight.",
-                            style = MaterialTheme.typography.labelSmall
-                        )
+                        if (canTakePSS){
+                            Text(
+                                text = "Complete the PSS-4 below to see your combined stress insight.",
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
                     }
                 }
                 Spacer(modifier = Modifier.height(24.dp))
@@ -150,10 +156,19 @@ fun DatelineScreen() {
         }
 
         item {
-            CustomCard(title = "Perceived Stress Scale (PSS-4)") {
-                PSSForm(onScoreCalculated = { score ->
-                    moodStore.setPSSScore(score)
-                })
+            
+            var forceShowResults by remember { mutableStateOf(false) }
+
+            if (canTakePSS || forceShowResults) {
+                CustomCard(title = "Perceived Stress Scale (PSS-4)") {
+                    PSSForm(
+                        lastTakenDate = lastPSSDate,
+                        onScoreCalculated = { score ->
+                            uid?.let { moodStore.setPSSScore(it, score) }
+                            forceShowResults = true
+                        }
+                    )
+                }
             }
         }
         

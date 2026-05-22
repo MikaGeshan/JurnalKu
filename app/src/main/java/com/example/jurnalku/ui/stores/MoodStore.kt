@@ -38,15 +38,49 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
     private val _lastPSSScore = MutableStateFlow<Int?>(null)
     val lastPSSScore: StateFlow<Int?> = _lastPSSScore
 
+    private val _lastPSSDate = MutableStateFlow<Long?>(null)
+    val lastPSSDate: StateFlow<Long?> = _lastPSSDate
+
     private val _finalStressScore = MutableStateFlow<Double?>(null)
     val finalStressScore: StateFlow<Double?> = _finalStressScore
 
     private val _stressResult = MutableStateFlow<StressResult?>(null)
     val stressResult: StateFlow<StressResult?> = _stressResult
 
-    fun setPSSScore(score: Int) {
+    fun setPSSScore(uid: String, score: Int) {
         _lastPSSScore.value = score
+        _lastPSSDate.value = System.currentTimeMillis()
         updateFinalStressScore()
+        savePSSScore(uid, score)
+    }
+
+    private fun savePSSScore(uid: String, score: Int) {
+        val data = mapOf(
+            "uid" to uid,
+            "score" to score,
+            "timestamp" to System.currentTimeMillis()
+        )
+        db.collection("pss_entries")
+            .add(data)
+            .addOnSuccessListener { Log.d("MoodStore", "PSS score saved") }
+            .addOnFailureListener { Log.e("MoodStore", "Failed to save PSS score", it) }
+    }
+
+    private fun fetchLatestPSS(uid: String) {
+        db.collection("pss_entries")
+            .whereEqualTo("uid", uid)
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .limit(1)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                val doc = querySnapshot.documents.firstOrNull()
+                if (doc != null) {
+                    _lastPSSScore.value = doc.getLong("score")?.toInt()
+                    _lastPSSDate.value = doc.getLong("timestamp")
+                    updateFinalStressScore()
+                }
+            }
+            .addOnFailureListener { Log.e("MoodStore", "Failed to fetch latest PSS", it) }
     }
 
     private fun updateFinalStressScore(date: Date = Date()) {
@@ -153,6 +187,7 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
                 }
                 _moodHistory.value = fullHistory
                 calculateWeeklyStats()
+                fetchLatestPSS(uid)
                 
                 val today = getTodayDate()
                 _selectedMood.value = MoodClass.all.find { it.key == fullHistory[today] }
