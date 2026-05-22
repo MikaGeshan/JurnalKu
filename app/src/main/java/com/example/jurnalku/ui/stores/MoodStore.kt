@@ -32,6 +32,9 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
     private val _weeklyStressScore = MutableStateFlow(0.0)
     val weeklyStressScore: StateFlow<Double> = _weeklyStressScore
 
+    private val _weeklyAverageMood = MutableStateFlow<Double?>(null)
+    val weeklyAverageMood: StateFlow<Double?> = _weeklyAverageMood
+
     private val _lastPSSScore = MutableStateFlow<Int?>(null)
     val lastPSSScore: StateFlow<Int?> = _lastPSSScore
 
@@ -46,10 +49,12 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
         updateFinalStressScore()
     }
 
-    private fun updateFinalStressScore() {
+    private fun updateFinalStressScore(date: Date = Date()) {
         val pssScore = _lastPSSScore.value
         val cal = Calendar.getInstance()
-        cal.set(Calendar.DAY_OF_WEEK, cal.firstDayOfWeek)
+        cal.time = date
+        cal.firstDayOfWeek = Calendar.MONDAY
+        cal.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
         val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         
         val moodValues = mutableListOf<Int>()
@@ -70,20 +75,30 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun calculateWeeklyStats() {
+    fun calculateWeeklyStats(date: Date = Date()) {
         val cal = Calendar.getInstance()
-        cal.set(Calendar.DAY_OF_WEEK, cal.firstDayOfWeek)
-        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        cal.time = date
+        cal.firstDayOfWeek = Calendar.MONDAY
+        cal.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+        // Normalize time to start of day
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
         
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         val weeklyMoods = mutableListOf<MoodClass>()
+        
+        Log.d("MoodStore", "Calculating stats starting from: ${sdf.format(cal.time)}")
         
         repeat(7) {
             val dateStr = sdf.format(cal.time)
             val moodKey = _moodHistory.value[dateStr]
             MoodClass.all.find { it.key == moodKey }?.let {
                 weeklyMoods.add(it)
+                Log.d("MoodStore", "Found mood for $dateStr: ${it.key}")
             }
-            cal.add(Calendar.DAY_OF_WEEK, 1)
+            cal.add(Calendar.DATE, 1)
         }
 
         val moodCounts = MoodClass.all.map { mood ->
@@ -95,33 +110,44 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
             )
         }
         _weeklyMoodData.value = moodCounts
+        Log.d("MoodStore", "Weekly Mood Data Updated: ${moodCounts.sumOf { it.count }} entries")
 
         val moodValues = weeklyMoods.map { it.value }
         if (moodValues.isNotEmpty()) {
             val avg = StressCalculator.calculateAverageMood(moodValues)
+            _weeklyAverageMood.value = avg
             _weeklyStressScore.value = StressCalculator.convertMoodToPSSScale(avg)
+            Log.d("MoodStore", "New Avg: $avg, New Stress Score: ${_weeklyStressScore.value}")
         } else {
+            _weeklyAverageMood.value = null
             _weeklyStressScore.value = 0.0
         }
 
-        updateFinalStressScore()
+        updateFinalStressScore(date)
     }
 
     private fun getTodayDate(): String = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
     fun fetchTodayMood(uid: String) {
         _isLoading.value = true
+        Log.d("MoodStore", "Fetching mood history for UID: $uid")
         db.collection("mood_entries")
             .whereEqualTo("uid", uid)
             .get()
             .addOnSuccessListener { querySnapshot ->
                 val fullHistory = mutableMapOf<String, String>()
+                Log.d("MoodStore", "Found ${querySnapshot.size()} batch documents")
+                
                 querySnapshot.documents.forEach { doc ->
-                    val moods = doc.get("moods") as? Map<String, Long> ?: emptyMap()
-                    moods.forEach { (date, value) ->
-                        val moodKey = MoodClass.all.find { it.value == value.toInt() }?.key
+                    val rawMoods = doc.get("moods") as? Map<*, *> ?: emptyMap<Any, Any>()
+                    Log.d("MoodStore", "Processing doc ${doc.id}, moods count: ${rawMoods.size}")
+                    
+                    rawMoods.forEach { (date, value) ->
+                        val dateStr = date.toString()
+                        val moodValue = (value as? Number)?.toInt() ?: 0
+                        val moodKey = MoodClass.all.find { it.value == moodValue }?.key
                         if (moodKey != null) {
-                            fullHistory[date] = moodKey
+                            fullHistory[dateStr] = moodKey
                         }
                     }
                 }
@@ -131,9 +157,10 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
                 val today = getTodayDate()
                 _selectedMood.value = MoodClass.all.find { it.key == fullHistory[today] }
                 _isLoading.value = false
-                Log.d("MoodStore", "History fetched from Firestore: ${fullHistory.size} entries")
+                Log.d("MoodStore", "Total history entries parsed: ${fullHistory.size}")
             }
             .addOnFailureListener {
+                Log.e("MoodStore", "Failed to fetch history", it)
                 _isLoading.value = false
             }
     }

@@ -8,7 +8,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -27,9 +28,9 @@ data class MoodData(
 
 @Composable
 fun MoodCounter(
-    moods: List<MoodData>
+    moods: List<MoodData>,
+    averageMood: Double? = null
 ) {
-
     val total = moods.sumOf { it.count }
 
     Column(
@@ -38,64 +39,106 @@ fun MoodCounter(
             .background(White)
             .padding(16.dp)
     ) {
-
-        Text("Mood Count")
-        Text("Tap on mood to see more")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "Mood Analysis",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Weekly summary",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray
+                )
+            }
+            
+            if (averageMood != null) {
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = "Avg Mood",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.Gray
+                    )
+                    Text(
+                        text = "%.2f".format(averageMood),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = com.example.jurnalku.ui.theme.JungleGreen
+                    )
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(180.dp),
-            contentAlignment = Alignment.Center
+                .height(140.dp), // Height adjusted for semi-circle
+            contentAlignment = Alignment.BottomCenter // Align to bottom for semi-circle
         ) {
-
             Canvas(
                 modifier = Modifier.fillMaxSize()
             ) {
+                val strokeWidth = 20.dp.toPx()
+                val diameter = size.width * 0.75f
+                val topLeft = Offset((size.width - diameter) / 2, size.height - (diameter / 2))
+                val arcSize = Size(diameter, diameter)
 
-                val strokeWidth = 24.dp.toPx()
-
-                val diameter = size.width * 0.9f
-                val arcRect = Rect(
-                    left = (size.width - diameter) / 2,
-                    top = 0f,
-                    right = (size.width + diameter) / 2,
-                    bottom = diameter
+                // Draw background gray arc
+                drawArc(
+                    color = Color.LightGray.copy(alpha = 0.2f),
+                    startAngle = 180f,
+                    sweepAngle = 180f,
+                    useCenter = false,
+                    style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
+                    topLeft = topLeft,
+                    size = arcSize
                 )
 
-                var startAngle = 180f
-
-                moods.forEach { mood ->
-
-                    val sweepAngle = if (total == 0) 0f
-                    else (mood.count.toFloat() / total) * 180f
-
-                    drawArc(
-                        color = mood.color,
-                        startAngle = startAngle,
-                        sweepAngle = sweepAngle,
-                        useCenter = false,
-                        style = Stroke(
-                            width = strokeWidth,
-                            cap = StrokeCap.Round
-                        ),
-                        topLeft = arcRect.topLeft,
-                        size = arcRect.size
-                    )
-
-                    startAngle += sweepAngle
+                if (total > 0) {
+                    var currentStartAngle = 180f
+                    moods.forEach { mood ->
+                        if (mood.count > 0) {
+                            val sweepAngle = (mood.count.toFloat() / total) * 180f
+                            drawArc(
+                                color = mood.color,
+                                startAngle = currentStartAngle,
+                                sweepAngle = sweepAngle,
+                                useCenter = false,
+                                style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
+                                topLeft = topLeft,
+                                size = arcSize
+                            )
+                            currentStartAngle += sweepAngle
+                        }
+                    }
                 }
             }
 
-            Text(
-                text = total.toString(),
-                modifier = Modifier.align(Alignment.Center),
-                style = MaterialTheme.typography.headlineLarge
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(bottom = 10.dp)
+            ) {
+                Text(
+                    text = total.toString(),
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "ENTRIES",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray
+                )
+            }
         }
 
+        Spacer(modifier = Modifier.height(16.dp))
 
         Box(
             modifier = Modifier
@@ -104,7 +147,7 @@ fun MoodCounter(
                 .background(Color.LightGray.copy(alpha = 0.5f))
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -120,13 +163,15 @@ fun MoodCounter(
                     Text(
                         text = mood.label.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
                         textAlign = TextAlign.Center,
-                        maxLines = 2,
-                        style = MaterialTheme.typography.labelSmall
+                        maxLines = 1,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (mood.count > 0) Color.Black else Color.Gray
                     )
                     Text(
                         text = mood.count.toString(),
                         fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (mood.count > 0) Color.Black else Color.Gray
                     )
                 }
             }

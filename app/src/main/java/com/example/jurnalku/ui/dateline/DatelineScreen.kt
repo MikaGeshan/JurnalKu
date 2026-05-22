@@ -15,23 +15,42 @@ import com.example.jurnalku.ui.components.MoodCounter
 import com.example.jurnalku.ui.components.pss.PSSForm
 import com.example.jurnalku.ui.entries.MoodClass
 import com.example.jurnalku.ui.stores.MoodStore
+import com.example.jurnalku.ui.stores.AuthStore
 import com.example.jurnalku.ui.theme.Green
 import com.example.jurnalku.ui.theme.Orange
 import com.example.jurnalku.ui.theme.Red
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.format.DateTimeParseException
+import java.util.Date
 
 @Composable
 fun DatelineScreen() {
+    val authStore: AuthStore = viewModel()
+    val user by authStore.user.collectAsState()
+    val uid = user?.uid
+
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     val moodStore: MoodStore = viewModel()
-    
+
     val moodHistoryRaw by moodStore.moodHistory.collectAsState()
     val weeklyMoodData by moodStore.weeklyMoodData.collectAsState()
+    val weeklyAverageMood by moodStore.weeklyAverageMood.collectAsState()
     val weeklyStressScore by moodStore.weeklyStressScore.collectAsState()
     val lastPSSScore by moodStore.lastPSSScore.collectAsState()
     val finalStressScore by moodStore.finalStressScore.collectAsState()
     val stressResult by moodStore.stressResult.collectAsState()
+
+    LaunchedEffect(uid) {
+        uid?.let { moodStore.fetchTodayMood(it) }
+    }
+
+    LaunchedEffect(selectedDate, moodHistoryRaw) {
+        if (uid != null && moodHistoryRaw.isNotEmpty()) {
+            val date = Date.from(selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
+            moodStore.calculateWeeklyStats(date)
+        }
+    }
 
     // Map the raw history (String: String) to (LocalDate: Emoji)
     val moodHistory = remember(moodHistoryRaw) {
@@ -65,7 +84,10 @@ fun DatelineScreen() {
         }
 
         item {
-            MoodCounter(moods = weeklyMoodData)
+            MoodCounter(
+                moods = weeklyMoodData,
+                averageMood = weeklyAverageMood
+            )
         }
 
         item {
