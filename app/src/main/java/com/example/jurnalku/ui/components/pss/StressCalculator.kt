@@ -13,74 +13,80 @@ data class StressResult(
 
 object StressCalculator {
 
-    /**
-     * Main calculation engine that returns a structured StressResult.
-     */
-    fun calculate(pss4Score: Int, moodValues: List<Int>): StressResult {
-        // 1. Validation
-        val validPssScore = pss4Score.coerceIn(0, 16)
-        val validMoodValues = moodValues.filter { it in 1..4 }
+    fun calculate(
+        pss4Score: Int,
+        moodValues: List<Int>
+    ): StressResult {
 
-        // 2. Calculation Steps
-        val avgMood = calculateAverageMood(validMoodValues)
+        require(pss4Score in 0..16) {
+            "PSS-4 score must be between 0 and 16"
+        }
+
+        require(moodValues.isNotEmpty()) {
+            "Mood values cannot be empty"
+        }
+
+        require(moodValues.all { it in 1..4 }) {
+            "Mood values must be between 1 and 4"
+        }
+
+        val avgMood = calculateAverageMood(moodValues)
         val convertedMood = convertMoodToPSSScale(avgMood)
-        val finalScore = calculateFinalStressScore(validPssScore, convertedMood)
-        val level = getStressLevel(finalScore)
+        val finalScore = calculateFinalStressScore(
+            pss4Score,
+            convertedMood
+        )
 
         return StressResult(
             averageMood = avgMood,
             convertedMood = convertedMood,
-            pss4Score = validPssScore,
+            pss4Score = pss4Score,
             finalScore = finalScore,
-            stressLevel = level
+            stressLevel = getStressLevel(finalScore)
         )
     }
 
-    /**
-     * Calculates average based on available data (modular).
-     */
-    fun calculateAverageMood(moodValues: List<Int>): Double {
-        if (moodValues.isEmpty()) return 1.0
+    fun calculateAverageMood(
+        moodValues: List<Int>
+    ): Double {
         return roundToTwoDecimals(moodValues.average())
     }
 
-    /**
-     * Calculates total valid moods.
-     */
-    fun calculateTotalMoods(moodValues: List<Int>): Int {
-        return moodValues.filter { it in 1..4 }.size
-    }
+    fun convertMoodToPSSScale(
+        averageMood: Double
+    ): Double {
 
-    /**
-     * Normalizes mood (1-4) to PSS scale (0-16).
-     */
-    fun convertMoodToPSSScale(averageMood: Double): Double {
-        val normalized = ((averageMood - 1.0) / (4.0 - 1.0)) * 16.0
+        val normalized =
+            ((averageMood - 1.0) / 3.0) * 16.0
+
         return roundToTwoDecimals(normalized)
     }
 
-    /**
-     * Averages PSS and Converted Mood scores.
-     */
-    fun calculateFinalStressScore(pssScore: Int, convertedMood: Double): Double {
-        val score = (pssScore.toDouble() + convertedMood) / 2.0
+    fun calculateFinalStressScore(
+        pssScore: Int,
+        convertedMood: Double
+    ): Double {
+
+        val score =
+            (pssScore + convertedMood) / 2.0
+
         return roundToTwoDecimals(score)
     }
 
-    /**
-     * Maps the final score to a Indonesian category string.
-     */
     fun getStressLevel(score: Double): String {
         return when {
-            score <= 5.0 -> "Stress Rendah"
-            score <= 10.0 -> "Stress Sedang"
+            score < 5.34 -> "Stress Rendah"
+            score < 10.67 -> "Stress Sedang"
             else -> "Stress Tinggi"
         }
     }
 
-    private fun roundToTwoDecimals(value: Double): Double {
-        return if (value.isNaN() || value.isInfinite()) 0.0 else {
-            BigDecimal(value).setScale(2, RoundingMode.HALF_UP).toDouble()
-        }
+    private fun roundToTwoDecimals(
+        value: Double
+    ): Double {
+
+        return BigDecimal(value)
+            .setScale(2, RoundingMode.HALF_UP)
+            .toDouble()
     }
 }
