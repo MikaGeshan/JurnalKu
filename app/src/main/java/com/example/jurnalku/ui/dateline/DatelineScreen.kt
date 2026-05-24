@@ -63,7 +63,6 @@ fun DatelineScreen() {
     }
 
     val totalMoods = moodHistory.size
-    val canTakePSS = totalMoods >= 30
 
     LazyColumn(
         modifier = Modifier

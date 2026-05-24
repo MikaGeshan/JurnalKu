@@ -41,6 +41,56 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
     private val _latestBatchSize = MutableStateFlow(0)
     val latestBatchSize: StateFlow<Int> = _latestBatchSize
 
+    fun calculateWeeklyStats(date: Date = Date()) {
+        val cal = Calendar.getInstance()
+        cal.time = date
+
+        // mulai dari 6 hari lalu
+        cal.add(Calendar.DATE, -6)
+
+        // normalize
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+
+        val weeklyMoods = mutableListOf<MoodClass>()
+
+        repeat(7) {
+            val dateStr = sdf.format(cal.time)
+
+            _moodHistory.value[dateStr]?.let { key ->
+                MoodClass.all.find { it.key == key }?.let {
+                    weeklyMoods.add(it)
+                }
+            }
+
+            cal.add(Calendar.DATE, 1)
+        }
+
+        val moodValues = weeklyMoods.map { it.value }
+
+        val pssScore = _lastPSSScore.value ?: 0
+
+        val result = StressCalculator.calculate(
+            pssScore,
+            moodValues
+        )
+
+        _weeklyMoodData.value = MoodClass.all.map { mood ->
+            MoodData(
+                label = mood.key,
+                count = weeklyMoods.count { it.key == mood.key },
+                color = mood.color,
+                emoji = mood.emoji
+            )
+        }
+
+        _stressResult.value = result
+    }
+
     fun setPSSScore(uid: String, score: Int) {
         _lastPSSScore.value = score
         _lastPSSDate.value = System.currentTimeMillis()
@@ -75,44 +125,6 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
                 }
             }
             .addOnFailureListener { Log.e("MoodStore", "Failed to fetch latest PSS", it) }
-    }
-
-    fun calculateWeeklyStats(date: Date = Date()) {
-        val cal = Calendar.getInstance()
-        cal.time = date
-        cal.firstDayOfWeek = Calendar.MONDAY
-        cal.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
-        // Normalize time to start of day
-        cal.set(Calendar.HOUR_OF_DAY, 0)
-        cal.set(Calendar.MINUTE, 0)
-        cal.set(Calendar.SECOND, 0)
-        cal.set(Calendar.MILLISECOND, 0)
-        
-        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val weeklyMoods = mutableListOf<MoodClass>()
-        
-        repeat(7) {
-            val dateStr = sdf.format(cal.time)
-            _moodHistory.value[dateStr]?.let { key ->
-                MoodClass.all.find { it.key == key }?.let { weeklyMoods.add(it) }
-            }
-            cal.add(Calendar.DATE, 1)
-        }
-
-        val moodValues = weeklyMoods.map { it.value }
-        val pssScore = _lastPSSScore.value ?: 0
-        val result = StressCalculator.calculate(pssScore, moodValues)
-
-        _weeklyMoodData.value = MoodClass.all.map { mood ->
-            MoodData(
-                label = mood.key,
-                count = weeklyMoods.count { it.key == mood.key },
-                color = mood.color,
-                emoji = mood.emoji
-            )
-        }
-        
-        _stressResult.value = result
     }
 
     private fun getTodayDate(): String = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
