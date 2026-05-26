@@ -42,7 +42,11 @@ fun DatelineScreen() {
         uid?.let { moodStore.fetchTodayMood(it) }
     }
 
-    LaunchedEffect(selectedDate, moodHistoryRaw, lastPSSScore) {
+    LaunchedEffect(
+        selectedDate,
+        moodHistoryRaw.hashCode(),
+        lastPSSScore
+    ) {
         if (uid != null && moodHistoryRaw.isNotEmpty()) {
             val date = Date.from(selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
             moodStore.calculateWeeklyStats(date)
@@ -61,8 +65,6 @@ fun DatelineScreen() {
             }
         }.toMap()
     }
-
-    val totalMoods = moodHistory.size
 
     LazyColumn(
         modifier = Modifier
@@ -89,12 +91,13 @@ fun DatelineScreen() {
             )
         }
 
-        if (latestBatchSize == 30) {
+        if (latestBatchSize >= 30) {
             item {
                 Spacer(modifier = Modifier.height(24.dp))
                 CustomCard(title = "Perceived Stress Scale (PSS-4)") {
                     PSSForm(
                         lastTakenDate = lastPSSDate,
+                        savedScore = lastPSSScore,
                         onScoreCalculated = { score ->
                             uid?.let { moodStore.setPSSScore(it, score) }
                         }

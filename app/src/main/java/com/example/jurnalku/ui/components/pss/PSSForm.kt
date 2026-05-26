@@ -13,8 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import java.util.Calendar
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,6 +36,7 @@ import com.example.jurnalku.ui.theme.Grey
 @Composable
 fun PSSForm(
     lastTakenDate: Long? = null,
+    savedScore: Int? = null,
     onScoreCalculated: (Int) -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -46,12 +46,25 @@ fun PSSForm(
     var isFinished by remember { mutableStateOf(false) }
 
     val canTakeTest = remember(lastTakenDate) {
-        if (lastTakenDate == null) true
-        else {
-            val thirtyDaysInMillis = 30L * 24 * 60 * 60 * 1000
-            System.currentTimeMillis() - lastTakenDate > thirtyDaysInMillis
+
+        if (lastTakenDate == null) {
+            true
+        } else {
+
+            val lastCalendar = Calendar.getInstance().apply {
+                timeInMillis = lastTakenDate
+                add(Calendar.DAY_OF_YEAR, 30)
+            }
+
+            val now = Calendar.getInstance()
+
+            now.after(lastCalendar) ||
+                    now.timeInMillis >= lastCalendar.timeInMillis
         }
     }
+
+    val hasPreviousResult =
+        savedScore != null && lastTakenDate != null
 
     val answers = remember {
         mutableStateListOf<Int?>().apply {
@@ -59,8 +72,16 @@ fun PSSForm(
         }
     }
 
-    if (isFinished) {
-        val score = calculatePSSScore(schema, answers)
+    val showResultPss =
+        (!canTakeTest && hasPreviousResult) || isFinished
+
+    if (showResultPss) {
+        val score =
+            if (isFinished) {
+                calculatePSSScore(schema, answers)
+            } else {
+                savedScore ?: 0
+            }
         val result = getPSSInterpretation(schema, score)
 
         Column(
@@ -96,10 +117,6 @@ fun PSSForm(
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
         }
-        return
-    }
-
-    if (!canTakeTest) {
         return
     }
 

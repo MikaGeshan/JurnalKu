@@ -4,57 +4,99 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 
 data class StressResult(
-    val averageMood: Double,
-    val convertedMood: Double,
-    val pss4Score: Int,
-    val finalScore: Double,
-    val stressLevel: String
+    val averageMood: Double = 0.0,
+    val convertedMood: Double = 0.0,
+    val pss4Score: Int = 0,
+    val finalScore: Double = 0.0,
+    val stressLevel: String = "Belum Ada Data",
+    val isSuccess: Boolean = false,
+    val errorMessage: String? = null
 )
 
 object StressCalculator {
 
     fun calculate(
-        pss4Score: Int,
-        moodValues: List<Int>
+        pss4Score: Int?,
+        moodValues: List<Int>?
     ): StressResult {
 
-        require(pss4Score in 0..16) {
-            "PSS-4 score must be between 0 and 16"
+        return try {
+
+            // SAFE DEFAULTS
+            val safePssScore = (pss4Score ?: 0)
+                .coerceIn(0, 16)
+
+            val safeMoodValues = moodValues
+                ?.filter { it in 1..4 }
+                ?: emptyList()
+
+            // Kalau belum ada data mood
+            if (safeMoodValues.isEmpty()) {
+                return StressResult(
+                    pss4Score = safePssScore,
+                    stressLevel = "Belum Ada Data",
+                    isSuccess = false,
+                    errorMessage = "Mood data kosong"
+                )
+            }
+
+            val avgMood =
+                calculateAverageMood(safeMoodValues)
+
+            val convertedMood =
+                convertMoodToPSSScale(avgMood)
+
+            val finalScore =
+                calculateFinalStressScore(
+                    safePssScore,
+                    convertedMood
+                )
+
+            val stressLevel =
+                getStressLevel(finalScore)
+
+            StressResult(
+                averageMood = avgMood,
+                convertedMood = convertedMood,
+                pss4Score = safePssScore,
+                finalScore = finalScore,
+                stressLevel = stressLevel,
+                isSuccess = true
+            )
+
+        } catch (e: Exception) {
+
+            StressResult(
+                stressLevel = "Error",
+                isSuccess = false,
+                errorMessage = e.message
+            )
         }
-
-        require(moodValues.isNotEmpty()) {
-            "Mood values cannot be empty"
-        }
-
-        require(moodValues.all { it in 1..4 }) {
-            "Mood values must be between 1 and 4"
-        }
-
-        val avgMood = calculateAverageMood(moodValues)
-        val convertedMood = convertMoodToPSSScale(avgMood)
-        val finalScore = calculateFinalStressScore(
-            pss4Score,
-            convertedMood
-        )
-
-        return StressResult(
-            averageMood = avgMood,
-            convertedMood = convertedMood,
-            pss4Score = pss4Score,
-            finalScore = finalScore,
-            stressLevel = getStressLevel(finalScore)
-        )
     }
 
     fun calculateAverageMood(
         moodValues: List<Int>
     ): Double {
-        return roundToTwoDecimals(moodValues.average())
+
+        if (moodValues.isEmpty()) return 0.0
+
+        return roundToTwoDecimals(
+            moodValues.average()
+        )
+    }
+
+    fun calculateTotalMoods(
+        moodValues: List<Int>
+    ): Int {
+
+        return moodValues.count { it in 1..4 }
     }
 
     fun convertMoodToPSSScale(
         averageMood: Double
     ): Double {
+
+        if (averageMood <= 0.0) return 0.0
 
         val normalized =
             ((averageMood - 1.0) / 3.0) * 16.0
@@ -73,8 +115,12 @@ object StressCalculator {
         return roundToTwoDecimals(score)
     }
 
-    fun getStressLevel(score: Double): String {
+    fun getStressLevel(
+        score: Double
+    ): String {
+
         return when {
+            score == 0.0 -> "Belum Ada Data"
             score < 5.34 -> "Stress Rendah"
             score < 10.67 -> "Stress Sedang"
             else -> "Stress Tinggi"
@@ -85,8 +131,12 @@ object StressCalculator {
         value: Double
     ): Double {
 
-        return BigDecimal(value)
-            .setScale(2, RoundingMode.HALF_UP)
-            .toDouble()
+        return try {
+            BigDecimal(value)
+                .setScale(2, RoundingMode.HALF_UP)
+                .toDouble()
+        } catch (e: Exception) {
+            0.0
+        }
     }
 }

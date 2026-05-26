@@ -60,26 +60,27 @@ fun MoodCounter(
                     color = Color.Gray
                 )
             }
-            
-            if (stressResult != null) {
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = stressResult.stressLevel,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = when (stressResult.stressLevel) {
-                            "Stress Rendah" -> Green
-                            "Stress Sedang" -> Orange
-                            "Stress Tinggi" -> Red
-                            else -> MaterialTheme.colorScheme.primary
-                        }
-                    )
-                    Text(
-                        text = "Avg Mood: %.2f".format(stressResult.averageMood),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.Gray
-                    )
-                }
+
+            val safeStressResult = stressResult ?: StressResult()
+
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = safeStressResult.stressLevel,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = when (safeStressResult.stressLevel) {
+                        "Stress Rendah" -> Green
+                        "Stress Sedang" -> Orange
+                        "Stress Tinggi" -> Red
+                        else -> Color.Gray
+                    }
+                )
+
+                Text(
+                    text = "Avg Mood: %.2f".format(safeStressResult.averageMood),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray
+                )
             }
         }
 
