@@ -16,7 +16,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.jurnalku.ui.theme.Grey
 import com.example.jurnalku.ui.theme.JungleGreen
-import com.example.jurnalku.ui.theme.White
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
@@ -33,9 +32,7 @@ fun Calendar(
     val today = LocalDate.now()
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
+        modifier = Modifier.fillMaxWidth()
     ) {
 
         // bulan
@@ -67,10 +64,7 @@ fun Calendar(
 
         // hari tanggal
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(White)
-                .padding(16.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
 
             Row(

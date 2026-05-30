@@ -21,7 +21,6 @@ import com.example.jurnalku.ui.components.pss.StressResult
 import com.example.jurnalku.ui.theme.Green
 import com.example.jurnalku.ui.theme.Orange
 import com.example.jurnalku.ui.theme.Red
-import com.example.jurnalku.ui.theme.White
 
 data class MoodData(
     val label: String,
@@ -38,32 +37,16 @@ fun MoodCounter(
     val total = moods.sumOf { it.count }
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(White)
-            .padding(16.dp)
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                Text(
-                    text = "Mood Analysis",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Weekly summary",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
-                )
-            }
-
             val safeStressResult = stressResult ?: StressResult()
 
-            Column(horizontalAlignment = Alignment.End) {
+            Column {
                 Text(
                     text = safeStressResult.stressLevel,
                     style = MaterialTheme.typography.titleLarge,
@@ -76,6 +59,14 @@ fun MoodCounter(
                     }
                 )
 
+                Text(
+                    text = "Weekly summary",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray
+                )
+            }
+
+            Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = "Avg Mood: %.2f".format(safeStressResult.averageMood),
                     style = MaterialTheme.typography.labelSmall,

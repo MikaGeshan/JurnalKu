@@ -4,6 +4,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.jurnalku.ui.components.Calendar
 import com.example.jurnalku.ui.components.CustomCard
@@ -28,14 +31,32 @@ fun DatelineScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp),
     ) {
         item {
-            Calendar(
-                selectedDate = selectedDate,
-                onDateSelected = onDateSelected,
-                moodHistory = moodHistory
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = "Your Journey",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
             )
+            Text(
+                text = "Tracking your moods and growth",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+
+        item {
+            CustomCard(title = "Calendar") {
+                Calendar(
+                    selectedDate = selectedDate,
+                    onDateSelected = onDateSelected,
+                    moodHistory = moodHistory
+                )
+            }
         }
 
         item {
@@ -43,16 +64,18 @@ fun DatelineScreen(
         }
 
         item {
-            MoodCounter(
-                moods = weeklyMoodData,
-                stressResult = stressResult
-            )
+            CustomCard(title = "Weekly Analysis") {
+                MoodCounter(
+                    moods = weeklyMoodData,
+                    stressResult = stressResult
+                )
+            }
         }
 
         if (latestBatchSize >= 30) {
             item {
                 Spacer(modifier = Modifier.height(24.dp))
-                CustomCard(title = "Perceived Stress Scale (PSS-4)") {
+                CustomCard(title = "Stress Scale (PSS-4)") {
                     PSSForm(
                         lastTakenDate = lastPSSDate,
                         savedScore = lastPSSScore,
@@ -63,7 +86,7 @@ fun DatelineScreen(
         }
         
         item {
-            Spacer(modifier = Modifier.height(100.dp)) // Padding for bottom bar
+            Spacer(modifier = Modifier.height(120.dp))
         }
     }
 }

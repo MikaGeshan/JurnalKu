@@ -12,12 +12,8 @@ import androidx.compose.runtime.mutableStateOf
 import java.util.UUID
 import com.example.jurnalku.ui.journal.list.JournalPagePayload
 import com.example.jurnalku.ui.journal.list.JournalEntry
-import com.example.jurnalku.ui.journal.list.DrawPathPayload
-import com.example.jurnalku.ui.journal.list.DrawPointPayload
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.jurnalku.ui.components.canvas.DrawPath
 import com.example.jurnalku.ui.journal.list.JournalRepository
 import com.example.jurnalku.ui.journal.list.RecentPageEntry
 import com.example.jurnalku.ui.stores.AuthStore
@@ -63,44 +59,6 @@ fun CreateJournalContainer(
         } else {
             navController.navigate("journal_list")
         }
-    }
-
-    fun generateJournalPayload(
-        text: String,
-        paperType: String,
-        paperColor: Color,
-        paths: List<DrawPath>,
-        imageBase64: String?,
-        imageOffsetX: Float,
-        imageOffsetY: Float,
-        imageScale: Float,
-        imageRotation: Float
-    ): JournalPagePayload {
-
-        return JournalPagePayload(
-            contentId = UUID.randomUUID().toString(),
-            text = text,
-            paperType = paperType,
-            paperColor = paperColor.value.toLong(),
-            imageBase64 = imageBase64,
-            imageOffsetX = imageOffsetX,
-            imageOffsetY = imageOffsetY,
-            imageScale = imageScale,
-            imageRotation = imageRotation,
-
-            paths = paths.map { path ->
-                DrawPathPayload(
-                    points = path.points.map {
-                        DrawPointPayload(
-                            x = it.x,
-                            y = it.y
-                        )
-                    },
-                    color = path.color.value.toLong(),
-                    strokeWidth = path.strokeWidth
-                )
-            }
-        )
     }
 
     fun handleSaveJournal(pages: List<JournalPagePayload>) {

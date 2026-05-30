@@ -3,10 +3,6 @@ package com.example.jurnalku.ui.journal.create
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
-import com.example.jurnalku.R
-import androidx.compose.foundation.Image
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,7 +19,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -40,8 +35,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import com.example.jurnalku.ui.components.PaperTypePreview
-import com.example.jurnalku.ui.components.canvas.DrawPath
 import com.example.jurnalku.ui.journal.list.JournalPagePayload
+import com.example.jurnalku.ui.theme.Cream
+import com.example.jurnalku.ui.theme.SoftBlue
+import com.example.jurnalku.ui.theme.SoftOrange
+import com.example.jurnalku.ui.theme.White
 
 
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
@@ -55,7 +53,7 @@ fun CreateJournalScreen(
     )
 {
 
-    var selectedColor by remember { mutableStateOf(Color.White) }
+    var selectedColor by remember { mutableStateOf(White) }
     var selectedType by remember { mutableStateOf("Blank") }
 
     if (showCanvas) {
@@ -70,10 +68,10 @@ fun CreateJournalScreen(
     }
 
     val colorOptions = listOf(
-        Color.White,
-        Color(0xFFF5E6CC),
-        Color(0xFFFFE0B2),
-        Color(0xFFDFF5E1)
+        White,
+        Cream,
+        SoftOrange,
+        SoftBlue
     )
 
     val paperTypes = listOf(

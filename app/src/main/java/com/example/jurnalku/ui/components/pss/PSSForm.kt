@@ -125,15 +125,6 @@ fun PSSForm(
     Column {
 
         Text(
-            text = schema.title,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            color = Black
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
             text = schema.description,
             fontSize = 14.sp,
             color = Color.Gray
