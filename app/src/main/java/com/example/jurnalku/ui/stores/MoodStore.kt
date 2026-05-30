@@ -130,7 +130,6 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
     }
 
     private fun getTodayDate(): String = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-
     fun fetchTodayMood(uid: String) {
         _isLoading.value = true
         Log.d("MoodStore", "Fetching mood history for UID: $uid")
@@ -188,6 +187,7 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
         onError: (Exception) -> Unit = {}
     ) {
         val today = getTodayDate()
+
         _isLoading.value = true
 
         db.collection("mood_entries")
@@ -274,13 +274,11 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
                     }
                 } else {
                     // Create a new batch document (first 30-day block)
-                    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-                    val now = LocalDateTime.now().format(formatter)
                     val newPayload = mapOf(
                         "uid" to uid,
                         "moods_0" to mapOf(today to mood.value),
-                        "created_at" to now,
-                        "last_updated" to now
+                        "created_at" to today,
+                        "last_updated" to today
                     )
                     db.collection("mood_entries").add(newPayload)
                         .addOnSuccessListener {
