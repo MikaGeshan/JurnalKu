@@ -14,6 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.example.jurnalku.ui.components.icon.AppIconClass
+import com.example.jurnalku.ui.components.icon.ComposableIcon
 import com.example.jurnalku.ui.theme.Grey
 import com.example.jurnalku.ui.theme.JungleGreen
 import java.time.LocalDate
@@ -25,7 +27,7 @@ import java.util.*
 fun Calendar(
     selectedDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
-    moodHistory: Map<LocalDate, String> = emptyMap()
+    moodHistory: Map<LocalDate, AppIconClass> = emptyMap()
 ) {
     var currentMonth by remember { mutableStateOf(YearMonth.now()) }
 
@@ -107,7 +109,7 @@ fun Calendar(
                             } else {
 
                                 val date = currentMonth.atDay(day)
-                                val moodEmoji = moodHistory[date]
+                                val moodIcon = moodHistory[date]
 
                                 val isToday = date == today
                                 val isSelected = date == selectedDate
@@ -134,10 +136,11 @@ fun Calendar(
                                     ) {
 
                                         // mood history
-                                        if (moodEmoji != null) {
-                                            Text(
-                                                text = moodEmoji,
-                                                style = MaterialTheme.typography.bodySmall
+                                        if (moodIcon != null) {
+                                            ComposableIcon(
+                                                icon = moodIcon,
+                                                tint = Color.Unspecified,
+                                                size = 16.dp
                                             )
                                         }
 

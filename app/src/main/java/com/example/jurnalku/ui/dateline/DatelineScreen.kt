@@ -12,6 +12,7 @@ import com.example.jurnalku.ui.components.Calendar
 import com.example.jurnalku.ui.components.CustomCard
 import com.example.jurnalku.ui.components.MoodCounter
 import com.example.jurnalku.ui.components.pss.PSSForm
+import com.example.jurnalku.ui.components.icon.AppIconClass
 import com.example.jurnalku.ui.components.MoodData
 import com.example.jurnalku.ui.components.pss.StressResult
 import java.time.LocalDate
@@ -20,7 +21,7 @@ import java.time.LocalDate
 fun DatelineScreen(
     selectedDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
-    moodHistory: Map<LocalDate, String>,
+    moodHistory: Map<LocalDate, AppIconClass>,
     weeklyMoodData: List<MoodData>,
     stressResult: StressResult?,
     latestBatchSize: Int,
@@ -39,7 +40,7 @@ fun DatelineScreen(
                 text = "Your Journey",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
+                color = MaterialTheme.colorScheme.onBackground,
             )
             Text(
                 text = "Tracking your moods and growth",

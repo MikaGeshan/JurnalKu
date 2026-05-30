@@ -86,7 +86,7 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
                 label = mood.key,
                 count = weeklyMoods.count { it.key == mood.key },
                 color = mood.color,
-                emoji = mood.emoji
+                icon = mood.icon
             )
         }
 

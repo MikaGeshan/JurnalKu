@@ -33,9 +33,9 @@ fun DatelineContainer() {
     LaunchedEffect(
         selectedDate,
         moodHistoryRaw.hashCode(),
-        lastPSSScore
+        lastPSSScore,
     ) {
-        if (uid != null && moodHistoryRaw.isNotEmpty()) {
+        if ((uid != null) && moodHistoryRaw.isNotEmpty()) {
             val date = Date.from(selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
             moodStore.calculateWeeklyStats(date)
         }
@@ -45,8 +45,8 @@ fun DatelineContainer() {
         moodHistoryRaw.mapNotNull { (dateStr, moodKey) ->
             try {
                 val date = LocalDate.parse(dateStr)
-                val emoji = MoodClass.getEmoji(moodKey)
-                if (emoji != null) date to emoji else null
+                val moodIcon = MoodClass.all.find { it.key == moodKey }?.icon
+                moodIcon?.let { date to it }
             } catch (e: DateTimeParseException) {
                 null
             }
@@ -64,6 +64,6 @@ fun DatelineContainer() {
         lastPSSScore = lastPSSScore,
         onPSSScoreCalculated = { score ->
             uid?.let { moodStore.setPSSScore(it, score) }
-        }
+        },
     )
 }

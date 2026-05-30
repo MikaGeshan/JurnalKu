@@ -17,6 +17,8 @@ import java.util.Locale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.jurnalku.ui.components.icon.AppIconClass
+import com.example.jurnalku.ui.components.icon.ComposableIcon
 import com.example.jurnalku.ui.components.pss.StressResult
 import com.example.jurnalku.ui.theme.Green
 import com.example.jurnalku.ui.theme.Orange
@@ -26,7 +28,7 @@ data class MoodData(
     val label: String,
     val count: Int,
     val color: Color,
-    val emoji: String
+    val icon: AppIconClass
 )
 
 @Composable
@@ -159,10 +161,26 @@ fun MoodCounter(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(text = mood.emoji)
+                    ComposableIcon(
+                        icon = mood.icon,
+                        tint = Color.Unspecified,
+                        size = 28.dp
+                    )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = mood.label.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
+                        text = mood.label
+                            .replace("_", " ")
+                            .lowercase()
+                            .split(" ")
+                            .joinToString(" ") { word ->
+                                word.replaceFirstChar {
+                                    if (it.isLowerCase()) {
+                                        it.titlecase(Locale.getDefault())
+                                    } else {
+                                        it.toString()
+                                    }
+                                }
+                            },
                         textAlign = TextAlign.Center,
                         maxLines = 1,
                         style = MaterialTheme.typography.labelSmall,
