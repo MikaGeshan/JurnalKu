@@ -103,12 +103,6 @@ fun EntriesContainer(
                 }
 
                 isLoading = false
-
-                Log.d(
-                    "FIRESTORE",
-                    journals.toString()
-                )
-
                 onSuccess(journals)
             }
 
