@@ -12,6 +12,8 @@ import com.google.firebase.firestore.Query
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 class MoodStore(application: Application) : AndroidViewModel(application) {
@@ -272,11 +274,13 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
                     }
                 } else {
                     // Create a new batch document (first 30-day block)
+                    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                    val now = LocalDateTime.now().format(formatter)
                     val newPayload = mapOf(
                         "uid" to uid,
                         "moods_0" to mapOf(today to mood.value),
-                        "created_at" to System.currentTimeMillis(),
-                        "last_updated" to System.currentTimeMillis()
+                        "created_at" to now,
+                        "last_updated" to now
                     )
                     db.collection("mood_entries").add(newPayload)
                         .addOnSuccessListener {

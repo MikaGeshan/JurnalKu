@@ -2,8 +2,6 @@ package com.example.jurnalku.ui.dateline
 
 import androidx.compose.runtime.*
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.jurnalku.ui.components.MoodData
-import com.example.jurnalku.ui.components.pss.StressResult
 import com.example.jurnalku.ui.entries.MoodClass
 import com.example.jurnalku.ui.stores.AuthStore
 import com.example.jurnalku.ui.stores.MoodStore
