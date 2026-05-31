@@ -73,7 +73,7 @@ fun PSSForm(
     }
 
     val showResultPss =
-        (!canTakeTest && hasPreviousResult) || isFinished
+        (!canTakeTest && hasPreviousResult) && isFinished
 
     if (showResultPss) {
         val score =

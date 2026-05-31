@@ -46,11 +46,14 @@ object StressCalculator {
             val convertedMood =
                 convertMoodToPSSScale(avgMood)
 
-            val finalScore =
+            val finalScore = if (pss4Score == null) {
+                convertedMood
+            } else {
                 calculateFinalStressScore(
                     safePssScore,
                     convertedMood
                 )
+            }
 
             val stressLevel =
                 getStressLevel(finalScore)
@@ -83,13 +86,6 @@ object StressCalculator {
         return roundToTwoDecimals(
             moodValues.average()
         )
-    }
-
-    fun calculateTotalMoods(
-        moodValues: List<Int>
-    ): Int {
-
-        return moodValues.count { it in 1..4 }
     }
 
     fun convertMoodToPSSScale(

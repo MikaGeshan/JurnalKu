@@ -25,6 +25,7 @@ fun DatelineContainer() {
     val lastPSSDate by moodStore.lastPSSDate.collectAsState()
     val stressResult by moodStore.stressResult.collectAsState()
     val latestBatchSize by moodStore.latestBatchSize.collectAsState()
+    val isLoading by moodStore.isLoading.collectAsState()
 
     LaunchedEffect(uid) {
         uid?.let { moodStore.fetchTodayMood(it) }
@@ -62,6 +63,7 @@ fun DatelineContainer() {
         latestBatchSize = latestBatchSize,
         lastPSSDate = lastPSSDate,
         lastPSSScore = lastPSSScore,
+        isLoading = isLoading,
         onPSSScoreCalculated = { score ->
             uid?.let { moodStore.setPSSScore(it, score) }
         },

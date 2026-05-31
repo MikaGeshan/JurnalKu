@@ -42,6 +42,8 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
 
     private val _latestBatchSize = MutableStateFlow(0)
     val latestBatchSize: StateFlow<Int> = _latestBatchSize
+    private fun getTodayDate(): String = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+    val today = getTodayDate()
 
     fun calculateWeeklyStats(date: Date = Date()) {
         val cal = Calendar.getInstance()
@@ -74,10 +76,10 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
 
         val moodValues = weeklyMoods.map { it.value }
 
-        val pssScore = _lastPSSScore.value ?: 0
-
+        // We pass null to StressCalculator so the result is based ONLY on moods.
+        // This prevents the PSS test score from "affecting" the MoodCounter display.
         val result = StressCalculator.calculate(
-            pssScore,
+            null,
             moodValues
         )
 
@@ -95,7 +97,12 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
 
     fun setPSSScore(uid: String, score: Int) {
         _lastPSSScore.value = score
-        _lastPSSDate.value = System.currentTimeMillis()
+        try {
+            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            _lastPSSDate.value = sdf.parse(today)?.time
+        } catch (_: Exception) {
+            _lastPSSDate.value = System.currentTimeMillis()
+        }
         calculateWeeklyStats()
         savePSSScore(uid, score)
     }
@@ -104,7 +111,7 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
         val data = mapOf(
             "uid" to uid,
             "score" to score,
-            "timestamp" to System.currentTimeMillis()
+            "timestamp" to today
         )
         db.collection("pss_entries")
             .add(data)
@@ -122,14 +129,25 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
                 val doc = querySnapshot.documents.firstOrNull()
                 if (doc != null) {
                     _lastPSSScore.value = doc.getLong("score")?.toInt()
-                    _lastPSSDate.value = doc.getLong("timestamp")
+                    
+                    val timestampObj = doc.get("timestamp")
+                    if (timestampObj is String) {
+                        try {
+                            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                            _lastPSSDate.value = sdf.parse(timestampObj)?.time
+                        } catch (e: Exception) {
+                            Log.e("MoodStore", "Failed to parse PSS string timestamp: $timestampObj", e)
+                        }
+                    } else if (timestampObj is Number) {
+                        _lastPSSDate.value = timestampObj.toLong()
+                    }
+                    
                     calculateWeeklyStats()
                 }
             }
             .addOnFailureListener { Log.e("MoodStore", "Failed to fetch latest PSS", it) }
     }
 
-    private fun getTodayDate(): String = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
     fun fetchTodayMood(uid: String) {
         _isLoading.value = true
         Log.d("MoodStore", "Fetching mood history for UID: $uid")
@@ -157,7 +175,14 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
                 }
 
                 val latestDoc = querySnapshot.documents
-                    .sortedByDescending { it.getLong("created_at") ?: 0L }
+                    .sortedByDescending { doc ->
+                        val createdAt = doc.get("created_at")
+                        when (createdAt) {
+                            is String -> createdAt
+                            is Number -> createdAt.toLong().toString() // Not perfect sorting for mixed, but safe
+                            else -> ""
+                        }
+                    }
                     .firstOrNull()
                 var countInLatest = 0
                 latestDoc?.data?.filterKeys { it.startsWith("moods") }?.values?.forEach {
@@ -186,8 +211,6 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
         onSuccess: () -> Unit = {},
         onError: (Exception) -> Unit = {}
     ) {
-        val today = getTodayDate()
-
         _isLoading.value = true
 
         db.collection("mood_entries")
@@ -195,7 +218,14 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
             .get()
             .addOnSuccessListener { querySnapshot ->
                 val latestDoc = querySnapshot.documents
-                    .sortedByDescending { it.getLong("created_at") ?: 0L }
+                    .sortedByDescending { doc ->
+                        val createdAt = doc.get("created_at")
+                        when (createdAt) {
+                            is String -> createdAt
+                            is Number -> createdAt.toLong().toString() // Not perfect sorting for mixed, but safe
+                            else -> ""
+                        }
+                    }
                     .firstOrNull()
 
                 val data = latestDoc?.data ?: emptyMap<String, Any>()
@@ -221,7 +251,7 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
                     moodsMap[today] = mood.value
                     latestDoc?.reference?.update(
                         foundField!!, moodsMap,
-                        "last_updated", System.currentTimeMillis()
+                        "last_updated", today
                     )?.addOnSuccessListener {
                         _selectedMood.value = mood
                         fetchTodayMood(uid) 
@@ -262,7 +292,7 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
                     
                     latestDoc.reference.update(
                         targetField, moodsMap,
-                        "last_updated", System.currentTimeMillis()
+                        "last_updated", today
                     ).addOnSuccessListener {
                         _selectedMood.value = mood
                         fetchTodayMood(uid) 

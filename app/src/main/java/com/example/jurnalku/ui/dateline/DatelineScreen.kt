@@ -10,6 +10,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.jurnalku.ui.components.Calendar
 import com.example.jurnalku.ui.components.CustomCard
+import com.example.jurnalku.ui.components.CustomLoadingSpinner
 import com.example.jurnalku.ui.components.MoodCounter
 import com.example.jurnalku.ui.components.pss.PSSForm
 import com.example.jurnalku.ui.components.icon.AppIconClass
@@ -27,13 +28,15 @@ fun DatelineScreen(
     latestBatchSize: Int,
     lastPSSDate: Long?,
     lastPSSScore: Int?,
+    isLoading: Boolean,
     onPSSScoreCalculated: (Int) -> Unit,
 ) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp),
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+        ) {
         item {
             Spacer(modifier = Modifier.height(24.dp))
             Text(
@@ -89,5 +92,10 @@ fun DatelineScreen(
         item {
             Spacer(modifier = Modifier.height(120.dp))
         }
+    }
+
+    if (isLoading) {
+        CustomLoadingSpinner(isOverlay = true)
+    }
     }
 }
