@@ -3,8 +3,10 @@
 
     <style name="Theme.JurnalKu" parent="android:Theme.Material.Light.NoActionBar" />
 
-    <style name="Theme.JurnalKu.Splash" parent="Theme.JurnalKu">
-        <item name="android:windowBackground">@drawable/splash_bg</item>
+    <style name="Theme.JurnalKu.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/white</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_logo_padded</item>
+        <item name="postSplashScreenTheme">@style/Theme.JurnalKu.Main</item>
     </style>
 
     <style name="Theme.JurnalKu.Main" parent="Theme.JurnalKu" />
