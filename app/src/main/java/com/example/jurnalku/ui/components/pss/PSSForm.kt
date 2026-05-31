@@ -63,17 +63,13 @@ fun PSSForm(
         }
     }
 
-    val hasPreviousResult =
-        savedScore != null && lastTakenDate != null
-
     val answers = remember {
         mutableStateListOf<Int?>().apply {
             repeat(schema.questions.size) { add(null) }
         }
     }
 
-    val showResultPss =
-        (!canTakeTest && hasPreviousResult) && isFinished
+    val showResultPss = isFinished || !canTakeTest
 
     if (showResultPss) {
         val score =
