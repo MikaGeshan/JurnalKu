@@ -350,6 +350,11 @@ fun CustomCanvas(
         undonePaths.clear() // Clear redo history when a new path is drawn
     }
 
+    fun handleClearAll() {
+        paths.clear()
+        undonePaths.clear()
+    }
+
     fun handleSaveJournal() {
         saveCurrentPageState()
         onSave(pages.toList())
@@ -372,7 +377,11 @@ fun CustomCanvas(
         DrawTool.ERASER -> 20f
     }
     val drawColor = if (selectedTool == DrawTool.ERASER) paperColor else selectedColor
-    Column(modifier = Modifier.fillMaxSize() ) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
 
         // header
         CanvasHeader(
@@ -432,117 +441,126 @@ fun CustomCanvas(
         }
 
         // default content
-        Box(
+        androidx.compose.material3.Surface(
             modifier = Modifier
                 .weight(1f)
-                .background(paperColor)
-                .clipToBounds()
-                .onGloballyPositioned { coordinates ->
-                    canvasSize = coordinates.size
-                }
+                .fillMaxWidth(),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+            shadowElevation = 8.dp,
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
+            color = paperColor
         ) {
-
-            CanvasPattern(
-                type = paperType
-            )
-
-            // text layer
-            TextField(
-                value = text,
-                onValueChange = { text = it },
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp),
-                placeholder = { Text("Start writing...") },
-                enabled = mode == CanvasMode.TEXT,
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
-                )
-            )
-
-            // image layer - moved above TextField to catch touches
-            selectedImageBase64?.let { base64String ->
-                val imageBytes = remember(base64String) {
-                    try {
-                        Base64.decode(base64String, Base64.DEFAULT)
-                    } catch (e: Exception) {
-                        null
+                    .clipToBounds()
+                    .onGloballyPositioned { coordinates ->
+                        canvasSize = coordinates.size
                     }
-                }
-                
-                if (imageBytes != null) {
-                    AsyncImage(
-                        model = imageBytes,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .graphicsLayer(
-                                translationX = imageOffset.x,
-                                translationY = imageOffset.y,
-                                scaleX = imageScale,
-                                scaleY = imageScale,
-                                rotationZ = imageRotation
-                            )
-                            .then(
-                                if (mode == CanvasMode.TEXT) {
-                                    Modifier.pointerInput(Unit) {
-                                        detectTapGestures {
-                                            mode = CanvasMode.IMAGE
-                                        }
-                                    }
-                                } else Modifier
-                            ),
-                        contentScale = ContentScale.Fit
-                    )
-                }
-            }
+            ) {
 
-            // draw layer selalu tampil
-            CanvasDrawMode(
-                paths = paths,
-                onPathAdded = ::handlePathAdded,
-                enabled = mode == CanvasMode.DRAW,
-                color = drawColor,
-                strokeWidth = strokeWidth,
-            )
+                CanvasPattern(
+                    type = paperType
+                )
 
-            // Image transformation overlay
-            if (mode == CanvasMode.IMAGE) {
-                Box(
+                // text layer
+                TextField(
+                    value = text,
+                    onValueChange = { text = it },
                     modifier = Modifier
                         .fillMaxSize()
-                        .pointerInput(Unit) {
-                            detectTapGestures {
-                                mode = CanvasMode.TEXT
-                            }
-                        }
-                        .pointerInput(Unit) {
-                            detectTransformGestures { _, pan, zoom, rotation ->
-                                // Constrain Scale
-                                imageScale = (imageScale * zoom).coerceIn(0.2f, 8f)
-                                
-                                // Apply Rotation
-                                imageRotation += rotation
-                                
-                                // Apply Pan with boundaries
-                                val newOffset = imageOffset + pan
-                                
-                                // Allow moving the image center up to its own scaled size away from canvas center
-                                // This keeps at least a part of the image visible
-                                val boundX = canvasSize.width.toFloat()
-                                val boundY = canvasSize.height.toFloat()
-                                
-                                imageOffset = Offset(
-                                    x = newOffset.x.coerceIn(-boundX, boundX),
-                                    y = newOffset.y.coerceIn(-boundY, boundY)
-                                )
-                            }
-                        }
+                        .padding(16.dp),
+                    placeholder = { Text("Start writing...") },
+                    enabled = mode == CanvasMode.TEXT,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        disabledContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent
+                    )
                 )
+
+                // image layer - moved above TextField to catch touches
+                selectedImageBase64?.let { base64String ->
+                    val imageBytes = remember(base64String) {
+                        try {
+                            Base64.decode(base64String, Base64.DEFAULT)
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
+
+                    if (imageBytes != null) {
+                        AsyncImage(
+                            model = imageBytes,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer(
+                                    translationX = imageOffset.x,
+                                    translationY = imageOffset.y,
+                                    scaleX = imageScale,
+                                    scaleY = imageScale,
+                                    rotationZ = imageRotation
+                                )
+                                .then(
+                                    if (mode == CanvasMode.TEXT) {
+                                        Modifier.pointerInput(Unit) {
+                                            detectTapGestures {
+                                                mode = CanvasMode.IMAGE
+                                            }
+                                        }
+                                    } else Modifier
+                                ),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
+                }
+
+                // draw layer selalu tampil
+                CanvasDrawMode(
+                    paths = paths,
+                    onPathAdded = ::handlePathAdded,
+                    enabled = mode == CanvasMode.DRAW,
+                    color = drawColor,
+                    strokeWidth = strokeWidth,
+                )
+
+                // Image transformation overlay
+                if (mode == CanvasMode.IMAGE) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .pointerInput(Unit) {
+                                detectTapGestures {
+                                    mode = CanvasMode.TEXT
+                                }
+                            }
+                            .pointerInput(Unit) {
+                                detectTransformGestures { _, pan, zoom, rotation ->
+                                    // Constrain Scale
+                                    imageScale = (imageScale * zoom).coerceIn(0.2f, 8f)
+
+                                    // Apply Rotation
+                                    imageRotation += rotation
+
+                                    // Apply Pan with boundaries
+                                    val newOffset = imageOffset + pan
+
+                                    // Allow moving the image center up to its own scaled size away from canvas center
+                                    // This keeps at least a part of the image visible
+                                    val boundX = canvasSize.width.toFloat()
+                                    val boundY = canvasSize.height.toFloat()
+
+                                    imageOffset = Offset(
+                                        x = newOffset.x.coerceIn(-boundX, boundX),
+                                        y = newOffset.y.coerceIn(-boundY, boundY)
+                                    )
+                                }
+                            }
+                    )
+                }
             }
         }
 
@@ -555,7 +573,8 @@ fun CustomCanvas(
                 onColorSelected = {
                     selectedColor = it
                     Log.d("COLOR_DEBUG", "selectedColor = $it")
-                }
+                },
+                onClearAll = ::handleClearAll
             )
         }
     }

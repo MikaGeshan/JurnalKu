@@ -13,7 +13,7 @@ val Orange = Color(0xFFFFA500)
 val Cream = Color(0xFFF5E6CC)
 val Yellow = Color(0xFFFFFF00)
 val Green = Color(0xFF008000)
-val SoftBlue = Color(0xB0C4DE)
+val SoftBlue = Color(0xFFB0C4DE)
 val Blue = Color(0xFF0000FF)
 val Purple = Color(0xFF800080)
 

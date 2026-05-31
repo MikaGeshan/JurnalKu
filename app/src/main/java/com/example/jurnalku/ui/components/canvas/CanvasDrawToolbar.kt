@@ -30,7 +30,8 @@ fun DrawToolbar(
     selectedTool: DrawTool,
     selectedColor: Color,
     onToolSelected: (DrawTool) -> Unit,
-    onColorSelected: (Color) -> Unit
+    onColorSelected: (Color) -> Unit,
+    onClearAll: () -> Unit = {}
 ) {
 
     val colors = listOf(
@@ -77,22 +78,40 @@ fun DrawToolbar(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // pallete
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            colors.forEach { color ->
-
-                val isSelected = color == selectedColor
-
-                Box(
-                    modifier = Modifier
-                        .size(if (isSelected) 40.dp else 30.dp)
-                        .padding(if (isSelected) 2.dp else 0.dp)
-                        .background(color, shape = CircleShape)
-                        .clickable { onColorSelected(color) }
+        // pallete or clear button
+        if (selectedTool == DrawTool.ERASER) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = Color.White,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onClearAll() }
+            ) {
+                Text(
+                    text = "Clear All Drawings",
+                    modifier = Modifier.padding(vertical = 12.dp),
+                    color = Red,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
+            }
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                colors.forEach { color ->
+
+                    val isSelected = color == selectedColor
+
+                    Box(
+                        modifier = Modifier
+                            .size(if (isSelected) 40.dp else 30.dp)
+                            .padding(if (isSelected) 2.dp else 0.dp)
+                            .background(color, shape = CircleShape)
+                            .clickable { onColorSelected(color) }
+                    )
+                }
             }
         }
     }
