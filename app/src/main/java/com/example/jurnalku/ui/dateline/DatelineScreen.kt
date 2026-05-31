@@ -63,9 +63,16 @@ fun DatelineScreen(
             }
         }
 
-        item {
-            Spacer(modifier = Modifier.height(24.dp))
-        }
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Your Mood",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+            }
 
         item {
             CustomCard(title = "Weekly Analysis") {
@@ -79,7 +86,7 @@ fun DatelineScreen(
         if (latestBatchSize >= 30) {
             item {
                 Spacer(modifier = Modifier.height(24.dp))
-                CustomCard(title = "Stress Scale (PSS-4)") {
+                CustomCard(title = "Monthly Analysis") {
                     PSSForm(
                         lastTakenDate = lastPSSDate,
                         savedScore = lastPSSScore,
