@@ -32,5 +32,9 @@ sealed class AppIconClass {
         val Undo = Drawable(R.drawable.undo)
         val Redo = Drawable(R.drawable.redo)
         val More = Vector(Icons.Default.MoreVert)
+        val Align_Left = Drawable(R.drawable.align_left)
+        val Align_Center = Drawable(R.drawable.align_center)
+        val Align_Right = Drawable(R.drawable.align_right)
+        val font_style = Drawable(R.drawable.font_adjustment)
     }
 }

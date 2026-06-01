@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.material3.LocalTextStyle
 import com.example.jurnalku.ui.journal.list.JournalPagePayload
 import com.example.jurnalku.ui.journal.list.DrawPathPayload
@@ -114,6 +115,8 @@ fun CustomCanvas(
     var fontFamilyState by remember { mutableStateOf<FontFamily>(FontFamily.Default) }
     var textAlignState by remember { mutableStateOf(TextAlign.Left) }
     var isUnderlinedState by remember { mutableStateOf(false) }
+    var isBoldState by remember { mutableStateOf(false) }
+    var isItalicState by remember { mutableStateOf(false) }
 
     // Load page data when index changes
     LaunchedEffect(currentPageIndex) {
@@ -485,6 +488,8 @@ fun CustomCanvas(
                         fontFamily = fontFamilyState,
                         textAlign = textAlignState,
                         textDecoration = if (isUnderlinedState) TextDecoration.Underline else TextDecoration.None,
+                        fontWeight = if (isBoldState) FontWeight.Bold else FontWeight.Normal,
+                        fontStyle = if (isItalicState) FontStyle.Italic else FontStyle.Normal,
                         fontSize = 16.sp
                     ),
                     colors = TextFieldDefaults.colors(
@@ -601,7 +606,11 @@ fun CustomCanvas(
                 textAlign = textAlignState,
                 onTextAlignChange = { textAlignState = it },
                 isUnderlined = isUnderlinedState,
-                onUnderlineChange = { isUnderlinedState = it }
+                onUnderlineChange = { isUnderlinedState = it },
+                isBold = isBoldState,
+                onBoldChange = { isBoldState = it },
+                isItalic = isItalicState,
+                onItalicChange = { isItalicState = it }
             )
         }
     }

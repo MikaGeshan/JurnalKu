@@ -60,7 +60,7 @@ fun CanvasHeader(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onPickImage) {
-                ComposableIcon(icon = AppIconClass.Journal, tint = Color.Unspecified, size = 24.dp)
+                ComposableIcon(icon = AppIconClass.Image, tint = Color.Unspecified, size = 24.dp)
             }
 
             IconButton(onClick = onToggleDraw) {
