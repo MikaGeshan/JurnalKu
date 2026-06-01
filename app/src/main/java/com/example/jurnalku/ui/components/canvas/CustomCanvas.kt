@@ -50,6 +50,10 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.IntSize
 
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.material3.LocalTextStyle
 import com.example.jurnalku.ui.journal.list.JournalPagePayload
 import com.example.jurnalku.ui.journal.list.DrawPathPayload
 import com.example.jurnalku.ui.journal.list.DrawPointPayload
@@ -105,6 +109,11 @@ fun CustomCanvas(
     var imageRotation by remember { mutableStateOf(0f) }
     val paths = remember { mutableStateListOf<DrawPath>() }
     val undonePaths = remember { mutableStateListOf<DrawPath>() }
+
+    // Text appearance state
+    var fontFamilyState by remember { mutableStateOf<FontFamily>(FontFamily.Default) }
+    var textAlignState by remember { mutableStateOf(TextAlign.Left) }
+    var isUnderlinedState by remember { mutableStateOf(false) }
 
     // Load page data when index changes
     LaunchedEffect(currentPageIndex) {
@@ -472,6 +481,12 @@ fun CustomCanvas(
                         .padding(16.dp),
                     placeholder = { Text("Start writing...") },
                     enabled = mode == CanvasMode.TEXT,
+                    textStyle = LocalTextStyle.current.copy(
+                        fontFamily = fontFamilyState,
+                        textAlign = textAlignState,
+                        textDecoration = if (isUnderlinedState) TextDecoration.Underline else TextDecoration.None,
+                        fontSize = 16.sp
+                    ),
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
@@ -575,6 +590,18 @@ fun CustomCanvas(
                     Log.d("COLOR_DEBUG", "selectedColor = $it")
                 },
                 onClearAll = ::handleClearAll
+            )
+        }
+
+        // toolbar text
+        if (mode == CanvasMode.TEXT) {
+            TextToolbar(
+                selectedFontFamily = fontFamilyState,
+                onFontFamilyChange = { fontFamilyState = it },
+                textAlign = textAlignState,
+                onTextAlignChange = { textAlignState = it },
+                isUnderlined = isUnderlinedState,
+                onUnderlineChange = { isUnderlinedState = it }
             )
         }
     }
