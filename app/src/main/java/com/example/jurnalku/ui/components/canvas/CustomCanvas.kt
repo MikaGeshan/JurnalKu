@@ -74,6 +74,33 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.platform.LocalDensity
 
 val defaultColor = Color.Black
+
+private fun fontFamilyToString(family: FontFamily): String = when (family) {
+    FontFamily.Serif -> "Serif"
+    FontFamily.SansSerif -> "SansSerif"
+    FontFamily.Monospace -> "Monospace"
+    else -> "Default"
+}
+
+private fun stringToFontFamily(family: String): FontFamily = when (family) {
+    "Serif" -> FontFamily.Serif
+    "SansSerif" -> FontFamily.SansSerif
+    "Monospace" -> FontFamily.Monospace
+    else -> FontFamily.Default
+}
+
+private fun textAlignToString(align: TextAlign): String = when (align) {
+    TextAlign.Center -> "Center"
+    TextAlign.Right -> "Right"
+    else -> "Left"
+}
+
+private fun stringToTextAlign(align: String): TextAlign = when (align) {
+    "Center" -> TextAlign.Center
+    "Right" -> TextAlign.Right
+    else -> TextAlign.Left
+}
+
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
 fun CustomCanvas(
@@ -117,6 +144,9 @@ fun CustomCanvas(
     var isUnderlinedState by remember { mutableStateOf(false) }
     var isBoldState by remember { mutableStateOf(false) }
     var isItalicState by remember { mutableStateOf(false) }
+    var isStrikethroughState by remember { mutableStateOf(false) }
+    var textColorState by remember { mutableStateOf(Color.Black) }
+    var fontSizeState by remember { mutableStateOf(16f) }
 
     // Load page data when index changes
     LaunchedEffect(currentPageIndex) {
@@ -126,6 +156,17 @@ fun CustomCanvas(
         imageOffset = Offset(currentPage.imageOffsetX, currentPage.imageOffsetY)
         imageScale = currentPage.imageScale
         imageRotation = currentPage.imageRotation
+        
+        // Load text effects
+        fontFamilyState = stringToFontFamily(currentPage.fontFamily)
+        textAlignState = stringToTextAlign(currentPage.textAlign)
+        isUnderlinedState = currentPage.isUnderlined
+        isBoldState = currentPage.isBold
+        isItalicState = currentPage.isItalic
+        isStrikethroughState = currentPage.isStrikethrough
+        textColorState = Color(currentPage.textColor.toULong())
+        fontSizeState = currentPage.fontSize
+
         paths.clear()
         paths.addAll(currentPage.paths.map { payload ->
             DrawPath(
@@ -145,6 +186,15 @@ fun CustomCanvas(
             imageOffsetY = imageOffset.y,
             imageScale = imageScale,
             imageRotation = imageRotation,
+            // Save text effects
+            fontFamily = fontFamilyToString(fontFamilyState),
+            textAlign = textAlignToString(textAlignState),
+            isUnderlined = isUnderlinedState,
+            isBold = isBoldState,
+            isItalic = isItalicState,
+            isStrikethrough = isStrikethroughState,
+            textColor = textColorState.value.toLong(),
+            fontSize = fontSizeState,
             paths = paths.map { path ->
                 DrawPathPayload(
                     points = path.points.map { DrawPointPayload(it.x, it.y) },
@@ -240,12 +290,39 @@ fun CustomCanvas(
         if (text.isNotEmpty()) {
             val textPaint = TextPaint().apply {
                 isAntiAlias = true
-                color = android.graphics.Color.BLACK
-                textSize = with(density) { 16.sp.toPx() }
+                color = textColorState.toArgb()
+                textSize = with(density) { fontSizeState.sp.toPx() }
+
+                // Handle Font Family
+                typeface = when (fontFamilyState) {
+                    FontFamily.Serif -> android.graphics.Typeface.SERIF
+                    FontFamily.SansSerif -> android.graphics.Typeface.SANS_SERIF
+                    FontFamily.Monospace -> android.graphics.Typeface.MONOSPACE
+                    else -> android.graphics.Typeface.DEFAULT
+                }
+
+                // Handle Weight and Style
+                val style = when {
+                    isBoldState && isItalicState -> android.graphics.Typeface.BOLD_ITALIC
+                    isBoldState -> android.graphics.Typeface.BOLD
+                    isItalicState -> android.graphics.Typeface.ITALIC
+                    else -> android.graphics.Typeface.NORMAL
+                }
+                typeface = android.graphics.Typeface.create(typeface, style)
+
+                isUnderlineText = isUnderlinedState
+                isStrikeThruText = isStrikethroughState
             }
+
+            val alignment = when (textAlignState) {
+                TextAlign.Center -> Layout.Alignment.ALIGN_CENTER
+                TextAlign.Right -> Layout.Alignment.ALIGN_OPPOSITE
+                else -> Layout.Alignment.ALIGN_NORMAL
+            }
+
             val padding = with(density) { 16.dp.toPx() }
-            val staticLayout = StaticLayout.Builder.obtain(text, 0, text.length, textPaint, canvasSize.width - (padding * 2).toInt())
-                .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+            val staticLayout = StaticLayout.Builder.obtain(text, 0, text.length, textPaint, (canvasSize.width - (padding * 2)).toInt())
+                .setAlignment(alignment)
                 .build()
 
             canvas.save()
@@ -487,10 +564,16 @@ fun CustomCanvas(
                     textStyle = LocalTextStyle.current.copy(
                         fontFamily = fontFamilyState,
                         textAlign = textAlignState,
-                        textDecoration = if (isUnderlinedState) TextDecoration.Underline else TextDecoration.None,
+                        textDecoration = TextDecoration.combine(
+                            buildList {
+                                if (isUnderlinedState) add(TextDecoration.Underline)
+                                if (isStrikethroughState) add(TextDecoration.LineThrough)
+                            }
+                        ),
                         fontWeight = if (isBoldState) FontWeight.Bold else FontWeight.Normal,
                         fontStyle = if (isItalicState) FontStyle.Italic else FontStyle.Normal,
-                        fontSize = 16.sp
+                        fontSize = fontSizeState.sp,
+                        color = textColorState
                     ),
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent,
@@ -610,7 +693,13 @@ fun CustomCanvas(
                 isBold = isBoldState,
                 onBoldChange = { isBoldState = it },
                 isItalic = isItalicState,
-                onItalicChange = { isItalicState = it }
+                onItalicChange = { isItalicState = it },
+                isStrikethrough = isStrikethroughState,
+                onStrikethroughChange = { isStrikethroughState = it },
+                selectedColor = textColorState,
+                onColorChange = { textColorState = it },
+                fontSize = fontSizeState,
+                onFontSizeChange = { fontSizeState = it }
             )
         }
     }

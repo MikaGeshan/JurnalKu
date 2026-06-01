@@ -1,5 +1,8 @@
 package com.example.jurnalku.ui.components.canvas
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -33,6 +36,12 @@ fun TextToolbar(
     onBoldChange: (Boolean) -> Unit,
     isItalic: Boolean,
     onItalicChange: (Boolean) -> Unit,
+    isStrikethrough: Boolean,
+    onStrikethroughChange: (Boolean) -> Unit,
+    selectedColor: Color,
+    onColorChange: (Color) -> Unit,
+    fontSize: Float,
+    onFontSizeChange: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val fontFamilies = listOf(
@@ -42,22 +51,36 @@ fun TextToolbar(
         FontFamily.Monospace
     )
 
+    val colors = listOf(
+        Black,
+        Color(0xFFF44336), // Red
+        Color(0xFFFF9800), // Orange
+        Color(0xFFFFEB3B), // Yellow
+        Color(0xFF4CAF50), // Green
+        Color(0xFF2196F3), // Blue
+        Color(0xFF9C27B0), // Purple
+        Color(0xFF795548), // Brown
+        Color(0xFF9E9E9E)  // Gray
+    )
+
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = Color(0xFFF5F5F5),
-        shadowElevation = 4.dp
+        shadowElevation = 8.dp
     ) {
         Column(
             modifier = Modifier
-                .padding(vertical = 4.dp, horizontal = 8.dp)
+                .padding(vertical = 8.dp, horizontal = 12.dp)
         ) {
+            // Style and Alignment Row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState()),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // Font Family Button
                 IconButton(
                     modifier = Modifier.size(40.dp),
                     onClick = {
@@ -66,9 +89,8 @@ fun TextToolbar(
                         onFontFamilyChange(fontFamilies[nextIndex])
                     }
                 ) {
-                    val icon = AppIconClass.font_style
                     Icon(
-                        painter = painterResource(id = icon.resId),
+                        painter = painterResource(id = AppIconClass.font_style.resId),
                         contentDescription = "Change Font",
                         tint = Black,
                         modifier = Modifier.size(20.dp)
@@ -77,65 +99,66 @@ fun TextToolbar(
 
                 VerticalDivider(modifier = Modifier.height(24.dp))
 
-                // Bold Toggle
-                IconButton(
-                    modifier = Modifier.size(40.dp),
-                    onClick = { onBoldChange(!isBold) },
-                    colors = IconButtonDefaults.iconButtonColors(
-                        containerColor = if (isBold) JungleGreen else Color.Transparent,
-                        contentColor = if (isBold) Color.White else Black
-                    )
+                // Font Size Control
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
+                    IconButton(
+                        modifier = Modifier.size(32.dp),
+                        onClick = { onFontSizeChange((fontSize - 2).coerceAtLeast(8f)) }
+                    ) {
+                        Text("-", fontWeight = FontWeight.Bold)
+                    }
                     Text(
-                        "B",
-                        style = TextStyle(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
+                        text = fontSize.toInt().toString(),
+                        style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Medium)
                     )
-                }
-
-                // Italic Toggle
-                IconButton(
-                    modifier = Modifier.size(40.dp),
-                    onClick = { onItalicChange(!isItalic) },
-                    colors = IconButtonDefaults.iconButtonColors(
-                        containerColor = if (isItalic) JungleGreen else Color.Transparent,
-                        contentColor = if (isItalic) Color.White else Black
-                    )
-                ) {
-                    Text(
-                        "I",
-                        style = TextStyle(
-                            fontStyle = FontStyle.Italic,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
-                    )
-                }
-
-                // Underline Toggle
-                IconButton(
-                    modifier = Modifier.size(40.dp),
-                    onClick = { onUnderlineChange(!isUnderlined) },
-                    colors = IconButtonDefaults.iconButtonColors(
-                        containerColor = if (isUnderlined) JungleGreen else Color.Transparent,
-                        contentColor = if (isUnderlined) Color.White else Black
-                    )
-                ) {
-                    Text(
-                        "U",
-                        style = TextStyle(
-                            textDecoration = TextDecoration.Underline,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
-                    )
+                    IconButton(
+                        modifier = Modifier.size(32.dp),
+                        onClick = { onFontSizeChange((fontSize + 2).coerceAtMost(72f)) }
+                    ) {
+                        Text("+", fontWeight = FontWeight.Bold)
+                    }
                 }
 
                 VerticalDivider(modifier = Modifier.height(24.dp))
 
-                // Separate Alignment Buttons
+                // Bold Toggle
+                ToolbarToggleButton(
+                    text = "B",
+                    isSelected = isBold,
+                    onClick = { onBoldChange(!isBold) },
+                    style = TextStyle(fontWeight = FontWeight.Bold)
+                )
+
+                // Italic Toggle
+                ToolbarToggleButton(
+                    text = "I",
+                    isSelected = isItalic,
+                    onClick = { onItalicChange(!isItalic) },
+                    style = TextStyle(fontStyle = FontStyle.Italic, fontWeight = FontWeight.Bold)
+                )
+
+                // Underline Toggle
+                ToolbarToggleButton(
+                    text = "U",
+                    isSelected = isUnderlined,
+                    onClick = { onUnderlineChange(!isUnderlined) },
+                    style = TextStyle(textDecoration = TextDecoration.Underline, fontWeight = FontWeight.Bold)
+                )
+
+                // Strikethrough Toggle
+                ToolbarToggleButton(
+                    text = "S",
+                    isSelected = isStrikethrough,
+                    onClick = { onStrikethroughChange(!isStrikethrough) },
+                    style = TextStyle(textDecoration = TextDecoration.LineThrough, fontWeight = FontWeight.Bold)
+                )
+
+                VerticalDivider(modifier = Modifier.height(24.dp))
+
+                // Alignment Buttons
                 val alignments = listOf(
                     TextAlign.Left to AppIconClass.Align_Left,
                     TextAlign.Center to AppIconClass.Align_Center,
@@ -160,6 +183,53 @@ fun TextToolbar(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Color Palette Row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                colors.forEach { color ->
+                    val isSelected = color == selectedColor
+                    Box(
+                        modifier = Modifier
+                            .size(if (isSelected) 32.dp else 24.dp)
+                            .background(color, shape = androidx.compose.foundation.shape.CircleShape)
+                            .padding(if (isSelected) 2.dp else 0.dp)
+                            .let {
+                                if (isSelected) it.border(2.dp, JungleGreen, androidx.compose.foundation.shape.CircleShape) else it
+                            }
+                            .clickable { onColorChange(color) }
+                    )
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun ToolbarToggleButton(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    style: TextStyle
+) {
+    IconButton(
+        modifier = Modifier.size(40.dp),
+        onClick = onClick,
+        colors = IconButtonDefaults.iconButtonColors(
+            containerColor = if (isSelected) JungleGreen else Color.Transparent,
+            contentColor = if (isSelected) Color.White else Black
+        )
+    ) {
+        Text(
+            text = text,
+            style = style.copy(fontSize = 16.sp)
+        )
     }
 }

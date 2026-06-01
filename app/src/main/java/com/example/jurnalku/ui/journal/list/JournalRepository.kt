@@ -125,6 +125,14 @@ class JournalRepository {
             "image_offset_y" to recentPage.imageOffsetY,
             "image_scale" to recentPage.imageScale,
             "image_rotation" to recentPage.imageRotation,
+            "font_family" to recentPage.fontFamily,
+            "text_align" to recentPage.textAlign,
+            "is_underlined" to recentPage.isUnderlined,
+            "is_bold" to recentPage.isBold,
+            "is_italic" to recentPage.isItalic,
+            "is_strikethrough" to recentPage.isStrikethrough,
+            "text_color" to recentPage.textColor,
+            "font_size" to recentPage.fontSize,
             "timestamp" to FieldValue.serverTimestamp()
         )
 
@@ -169,6 +177,14 @@ class JournalRepository {
                             imageOffsetY = doc.getDouble("image_offset_y")?.toFloat() ?: 0f,
                             imageScale = doc.getDouble("image_scale")?.toFloat() ?: 1f,
                             imageRotation = doc.getDouble("image_rotation")?.toFloat() ?: 0f,
+                            fontFamily = doc.getString("font_family") ?: "Default",
+                            textAlign = doc.getString("text_align") ?: "Left",
+                            isUnderlined = doc.getBoolean("is_underlined") ?: false,
+                            isBold = doc.getBoolean("is_bold") ?: false,
+                            isItalic = doc.getBoolean("is_italic") ?: false,
+                            isStrikethrough = doc.getBoolean("is_strikethrough") ?: false,
+                            textColor = doc.getLong("text_color") ?: 0xFF000000,
+                            fontSize = doc.getDouble("font_size")?.toFloat() ?: 16f,
                             timestamp = doc.getTimestamp("timestamp")?.toDate()?.time ?: 0L
                         )
                     } catch (e: Exception) {

@@ -18,7 +18,15 @@ data class JournalPagePayload(
     val imageOffsetX: Float = 0f,
     val imageOffsetY: Float = 0f,
     val imageScale: Float = 1f,
-    val imageRotation: Float = 0f
+    val imageRotation: Float = 0f,
+    val fontFamily: String = "Default",
+    val textAlign: String = "Left",
+    val isUnderlined: Boolean = false,
+    val isBold: Boolean = false,
+    val isItalic: Boolean = false,
+    val isStrikethrough: Boolean = false,
+    val textColor: Long = 0xFF000000,
+    val fontSize: Float = 16f
 )
 
 data class DrawPointPayload(
@@ -45,5 +53,38 @@ data class RecentPageEntry(
     val imageOffsetY: Float = 0f,
     val imageScale: Float = 1f,
     val imageRotation: Float = 0f,
+    val fontFamily: String = "Default",
+    val textAlign: String = "Left",
+    val isUnderlined: Boolean = false,
+    val isBold: Boolean = false,
+    val isItalic: Boolean = false,
+    val isStrikethrough: Boolean = false,
+    val textColor: Long = 0xFF000000,
+    val fontSize: Float = 16f,
     val timestamp: Long = 0L
 )
+
+fun JournalPagePayload.toRecentPageEntry(journalId: String, journalName: String, pageIndex: Int): RecentPageEntry {
+    return RecentPageEntry(
+        journalId = journalId,
+        journalName = journalName,
+        pageIndex = pageIndex,
+        paperType = this.paperType,
+        paperColor = this.paperColor,
+        text = this.text,
+        paths = this.paths,
+        imageBase64 = this.imageBase64,
+        imageOffsetX = this.imageOffsetX,
+        imageOffsetY = this.imageOffsetY,
+        imageScale = this.imageScale,
+        imageRotation = this.imageRotation,
+        fontFamily = this.fontFamily,
+        textAlign = this.textAlign,
+        isUnderlined = this.isUnderlined,
+        isBold = this.isBold,
+        isItalic = this.isItalic,
+        isStrikethrough = this.isStrikethrough,
+        textColor = this.textColor,
+        fontSize = this.fontSize
+    )
+}

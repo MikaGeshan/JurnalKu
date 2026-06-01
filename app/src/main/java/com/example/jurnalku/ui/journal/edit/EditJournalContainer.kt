@@ -12,6 +12,7 @@ import com.example.jurnalku.ui.journal.list.DrawPointPayload
 import com.example.jurnalku.ui.journal.list.JournalPagePayload
 import com.example.jurnalku.ui.journal.list.JournalRepository
 import com.example.jurnalku.ui.journal.list.RecentPageEntry
+import com.example.jurnalku.ui.journal.list.toRecentPageEntry
 import com.example.jurnalku.ui.stores.AuthStore
 import androidx.lifecycle.viewmodel.compose.viewModel
 
@@ -41,22 +42,12 @@ fun EditJournalContainer(
 
                 // Save first page as recent for now
                 if (journal.pages.isNotEmpty()) {
-                    val firstPage = journal.pages.first()
                     repository.saveRecentPage(
                         uid = uid,
-                        recentPage = RecentPageEntry(
+                        recentPage = journal.pages.first().toRecentPageEntry(
                             journalId = journalId,
                             journalName = journal.journalName,
-                            pageIndex = 0,
-                            paperType = firstPage.paperType,
-                            paperColor = firstPage.paperColor,
-                            text = firstPage.text,
-                            paths = firstPage.paths,
-                            imageBase64 = firstPage.imageBase64,
-                            imageOffsetX = firstPage.imageOffsetX,
-                            imageOffsetY = firstPage.imageOffsetY,
-                            imageScale = firstPage.imageScale,
-                            imageRotation = firstPage.imageRotation
+                            pageIndex = 0
                         )
                     )
                 }
@@ -76,22 +67,12 @@ fun EditJournalContainer(
             onSuccess = {
                 // Update recent page info when saving
                 if (updatedPages.isNotEmpty()) {
-                    val firstPage = updatedPages.first()
                     repository.saveRecentPage(
                         uid = uid,
-                        recentPage = RecentPageEntry(
+                        recentPage = updatedPages.first().toRecentPageEntry(
                             journalId = journalId,
                             journalName = journalName,
-                            pageIndex = 0,
-                            paperType = firstPage.paperType,
-                            paperColor = firstPage.paperColor,
-                            text = firstPage.text,
-                            paths = firstPage.paths,
-                            imageBase64 = firstPage.imageBase64,
-                            imageOffsetX = firstPage.imageOffsetX,
-                            imageOffsetY = firstPage.imageOffsetY,
-                            imageScale = firstPage.imageScale,
-                            imageRotation = firstPage.imageRotation
+                            pageIndex = 0
                         )
                     )
                 }
