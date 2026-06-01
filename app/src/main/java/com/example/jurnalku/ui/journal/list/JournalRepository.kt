@@ -133,6 +133,7 @@ class JournalRepository {
             "is_strikethrough" to recentPage.isStrikethrough,
             "text_color" to recentPage.textColor,
             "font_size" to recentPage.fontSize,
+            "spans_json" to Gson().toJson(recentPage.spans),
             "timestamp" to FieldValue.serverTimestamp()
         )
 
@@ -185,6 +186,11 @@ class JournalRepository {
                             isStrikethrough = doc.getBoolean("is_strikethrough") ?: false,
                             textColor = doc.getLong("text_color") ?: 0xFF000000,
                             fontSize = doc.getDouble("font_size")?.toFloat() ?: 16f,
+                            spans = try {
+                                val spansJson = doc.getString("spans_json")
+                                val spansType = object : com.google.gson.reflect.TypeToken<List<TextSpanPayload>>() {}.type
+                                if (spansJson != null) Gson().fromJson<List<TextSpanPayload>>(spansJson, spansType) else emptyList()
+                            } catch (e: Exception) { emptyList() },
                             timestamp = doc.getTimestamp("timestamp")?.toDate()?.time ?: 0L
                         )
                     } catch (e: Exception) {

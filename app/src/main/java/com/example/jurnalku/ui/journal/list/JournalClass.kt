@@ -8,6 +8,18 @@ data class JournalEntry(
     val payload: JournalPagePayload get() = pages.firstOrNull() ?: JournalPagePayload()
 }
 
+data class TextSpanPayload(
+    val start: Int = 0,
+    val end: Int = 0,
+    val isBold: Boolean = false,
+    val isItalic: Boolean = false,
+    val isUnderlined: Boolean = false,
+    val isStrikethrough: Boolean = false,
+    val color: Long = 0xFF000000,
+    val fontSize: Float = 16f,
+    val fontFamily: String = "Default"
+)
+
 data class JournalPagePayload(
     val contentId: String = "",
     val text: String = "",
@@ -26,7 +38,8 @@ data class JournalPagePayload(
     val isItalic: Boolean = false,
     val isStrikethrough: Boolean = false,
     val textColor: Long = 0xFF000000,
-    val fontSize: Float = 16f
+    val fontSize: Float = 16f,
+    val spans: List<TextSpanPayload> = emptyList()
 )
 
 data class DrawPointPayload(
@@ -61,6 +74,7 @@ data class RecentPageEntry(
     val isStrikethrough: Boolean = false,
     val textColor: Long = 0xFF000000,
     val fontSize: Float = 16f,
+    val spans: List<TextSpanPayload> = emptyList(),
     val timestamp: Long = 0L
 )
 
@@ -85,6 +99,7 @@ fun JournalPagePayload.toRecentPageEntry(journalId: String, journalName: String,
         isItalic = this.isItalic,
         isStrikethrough = this.isStrikethrough,
         textColor = this.textColor,
-        fontSize = this.fontSize
+        fontSize = this.fontSize,
+        spans = this.spans
     )
 }

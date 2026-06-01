@@ -55,6 +55,13 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.TextRange
+import com.example.jurnalku.ui.journal.list.TextSpanPayload
 import com.example.jurnalku.ui.journal.list.JournalPagePayload
 import com.example.jurnalku.ui.journal.list.DrawPathPayload
 import com.example.jurnalku.ui.journal.list.DrawPointPayload
@@ -101,6 +108,51 @@ private fun stringToTextAlign(align: String): TextAlign = when (align) {
     else -> TextAlign.Left
 }
 
+private fun annotatedStringToSpans(annotatedString: AnnotatedString): List<TextSpanPayload> {
+    return annotatedString.spanStyles.map { range ->
+        val style = range.item
+        TextSpanPayload(
+            start = range.start,
+            end = range.end,
+            isBold = style.fontWeight == FontWeight.Bold,
+            isItalic = style.fontStyle == FontStyle.Italic,
+            isUnderlined = style.textDecoration?.contains(TextDecoration.Underline) == true,
+            isStrikethrough = style.textDecoration?.contains(TextDecoration.LineThrough) == true,
+            color = style.color.value.toLong(),
+            fontSize = style.fontSize.isSp.let { if (it) style.fontSize.value else 16f },
+            fontFamily = style.fontFamily?.let { fontFamilyToString(it) } ?: "Default"
+        )
+    }
+}
+
+private fun spansToAnnotatedString(text: String, spans: List<TextSpanPayload>): AnnotatedString {
+    return buildAnnotatedString {
+        append(text)
+        spans.forEach { span ->
+            if (span.start < text.length) {
+                val end = span.end.coerceAtMost(text.length)
+                addStyle(
+                    style = SpanStyle(
+                        fontWeight = if (span.isBold) FontWeight.Bold else FontWeight.Normal,
+                        fontStyle = if (span.isItalic) FontStyle.Italic else FontStyle.Normal,
+                        textDecoration = TextDecoration.combine(
+                            buildList {
+                                if (span.isUnderlined) add(TextDecoration.Underline)
+                                if (span.isStrikethrough) add(TextDecoration.LineThrough)
+                            }
+                        ),
+                        color = Color(span.color.toULong()),
+                        fontSize = span.fontSize.sp,
+                        fontFamily = stringToFontFamily(span.fontFamily)
+                    ),
+                    start = span.start,
+                    end = end
+                )
+            }
+        }
+    }
+}
+
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
 fun CustomCanvas(
@@ -130,7 +182,7 @@ fun CustomCanvas(
 
     // State for current page
     var mode by remember { mutableStateOf(CanvasMode.TEXT) }
-    var text by remember { mutableStateOf("") }
+    var textFieldValue by remember { mutableStateOf(TextFieldValue("")) }
     var selectedImageBase64 by remember { mutableStateOf<String?>(null) }
     var imageOffset by remember { mutableStateOf(Offset.Zero) }
     var imageScale by remember { mutableStateOf(1f) }
@@ -151,7 +203,10 @@ fun CustomCanvas(
     // Load page data when index changes
     LaunchedEffect(currentPageIndex) {
         val currentPage = pages[currentPageIndex]
-        text = currentPage.text
+        Log.d("LOAD_PAGE", "Loading page $currentPageIndex, text: ${currentPage.text}, spans: ${currentPage.spans.size}")
+        textFieldValue = TextFieldValue(
+            annotatedString = spansToAnnotatedString(currentPage.text, currentPage.spans)
+        )
         selectedImageBase64 = currentPage.imageBase64
         imageOffset = Offset(currentPage.imageOffsetX, currentPage.imageOffsetY)
         imageScale = currentPage.imageScale
@@ -179,8 +234,11 @@ fun CustomCanvas(
     }
 
     fun saveCurrentPageState() {
+        val currentSpans = annotatedStringToSpans(textFieldValue.annotatedString)
+        Log.d("SAVE_PAGE", "Saving page $currentPageIndex, text: ${textFieldValue.text}, spans: ${currentSpans.size}")
         pages[currentPageIndex] = pages[currentPageIndex].copy(
-            text = text,
+            text = textFieldValue.text,
+            spans = currentSpans,
             imageBase64 = selectedImageBase64,
             imageOffsetX = imageOffset.x,
             imageOffsetY = imageOffset.y,
@@ -287,41 +345,77 @@ fun CustomCanvas(
         }
 
         // 4. Text
-        if (text.isNotEmpty()) {
-            val textPaint = TextPaint().apply {
-                isAntiAlias = true
-                color = textColorState.toArgb()
-                textSize = with(density) { fontSizeState.sp.toPx() }
-
-                // Handle Font Family
-                typeface = when (fontFamilyState) {
-                    FontFamily.Serif -> android.graphics.Typeface.SERIF
-                    FontFamily.SansSerif -> android.graphics.Typeface.SANS_SERIF
-                    FontFamily.Monospace -> android.graphics.Typeface.MONOSPACE
-                    else -> android.graphics.Typeface.DEFAULT
-                }
-
-                // Handle Weight and Style
-                val style = when {
-                    isBoldState && isItalicState -> android.graphics.Typeface.BOLD_ITALIC
-                    isBoldState -> android.graphics.Typeface.BOLD
-                    isItalicState -> android.graphics.Typeface.ITALIC
-                    else -> android.graphics.Typeface.NORMAL
-                }
-                typeface = android.graphics.Typeface.create(typeface, style)
-
-                isUnderlineText = isUnderlinedState
-                isStrikeThruText = isStrikethroughState
-            }
-
+        if (textFieldValue.text.isNotEmpty()) {
+            val padding = with(density) { 16.dp.toPx() }
+            val maxWidth = (canvasSize.width - (padding * 2)).toInt()
+            
             val alignment = when (textAlignState) {
                 TextAlign.Center -> Layout.Alignment.ALIGN_CENTER
                 TextAlign.Right -> Layout.Alignment.ALIGN_OPPOSITE
                 else -> Layout.Alignment.ALIGN_NORMAL
             }
 
-            val padding = with(density) { 16.dp.toPx() }
-            val staticLayout = StaticLayout.Builder.obtain(text, 0, text.length, textPaint, (canvasSize.width - (padding * 2)).toInt())
+            // We need to build a Spannable from AnnotatedString for StaticLayout
+            val spannable = android.text.SpannableStringBuilder(textFieldValue.text)
+            
+            // Apply base style
+            val baseTypeface = when (fontFamilyState) {
+                FontFamily.Serif -> android.graphics.Typeface.SERIF
+                FontFamily.SansSerif -> android.graphics.Typeface.SANS_SERIF
+                FontFamily.Monospace -> android.graphics.Typeface.MONOSPACE
+                else -> android.graphics.Typeface.DEFAULT
+            }
+            
+            textFieldValue.annotatedString.spanStyles.forEach { range ->
+                val style = range.item
+                val start = range.start
+                val end = range.end
+                
+                // Color
+                spannable.setSpan(
+                    android.text.style.ForegroundColorSpan(style.color.toArgb()),
+                    start, end, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+                
+                // Size
+                if (style.fontSize.isSp) {
+                    spannable.setSpan(
+                        android.text.style.AbsoluteSizeSpan(with(density) { style.fontSize.toPx() }.toInt()),
+                        start, end, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                }
+                
+                // Typeface (Bold/Italic/FontFamily)
+                val tfBase = when (style.fontFamily) {
+                    FontFamily.Serif -> android.graphics.Typeface.SERIF
+                    FontFamily.SansSerif -> android.graphics.Typeface.SANS_SERIF
+                    FontFamily.Monospace -> android.graphics.Typeface.MONOSPACE
+                    else -> baseTypeface
+                }
+                val styleInt = (if (style.fontWeight == FontWeight.Bold) android.graphics.Typeface.BOLD else 0) or
+                               (if (style.fontStyle == FontStyle.Italic) android.graphics.Typeface.ITALIC else 0)
+                val tf = android.graphics.Typeface.create(tfBase, styleInt)
+                spannable.setSpan(
+                    android.text.style.TypefaceSpan(tf),
+                    start, end, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+                
+                // Decorations
+                if (style.textDecoration?.contains(TextDecoration.Underline) == true) {
+                    spannable.setSpan(android.text.style.UnderlineSpan(), start, end, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                }
+                if (style.textDecoration?.contains(TextDecoration.LineThrough) == true) {
+                    spannable.setSpan(android.text.style.StrikethroughSpan(), start, end, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                }
+            }
+
+            val textPaint = TextPaint().apply {
+                isAntiAlias = true
+                textSize = with(density) { fontSizeState.sp.toPx() }
+                color = textColorState.toArgb()
+            }
+
+            val staticLayout = StaticLayout.Builder.obtain(spannable, 0, spannable.length, textPaint, maxWidth)
                 .setAlignment(alignment)
                 .build()
 
@@ -554,8 +648,69 @@ fun CustomCanvas(
 
                 // text layer
                 TextField(
-                    value = text,
-                    onValueChange = { text = it },
+                    value = textFieldValue,
+                    onValueChange = { newValue ->
+                        val oldV = textFieldValue
+                        val newV = newValue
+                        
+                        if (newV.text == oldV.text) {
+                            // Selection or cursor move
+                            textFieldValue = newV.copy(annotatedString = oldV.annotatedString)
+                            return@TextField
+                        }
+
+                        val oldA = oldV.annotatedString
+                        val newT = newV.text
+                        
+                        // Prefix/Suffix Diffing to preserve spans
+                        var prefixLen = 0
+                        while (prefixLen < oldA.text.length && prefixLen < newT.length && oldA.text[prefixLen] == newT[prefixLen]) {
+                            prefixLen++
+                        }
+                        
+                        var suffixLen = 0
+                        while (suffixLen < (oldA.text.length - prefixLen) && 
+                               suffixLen < (newT.length - prefixLen) && 
+                               oldA.text[oldA.text.length - 1 - suffixLen] == newT[newT.length - 1 - suffixLen]) {
+                            suffixLen++
+                        }
+                        
+                        val builder = AnnotatedString.Builder()
+                        try {
+                            // 1. Keep prefix spans
+                            builder.append(oldA.subSequence(0, prefixLen))
+                            
+                            // 2. Add styled new middle part
+                            val middlePart = newT.substring(prefixLen, newT.length - suffixLen)
+                            if (middlePart.isNotEmpty()) {
+                                builder.withStyle(
+                                    style = SpanStyle(
+                                        fontWeight = if (isBoldState) FontWeight.Bold else FontWeight.Normal,
+                                        fontStyle = if (isItalicState) FontStyle.Italic else FontStyle.Normal,
+                                        textDecoration = TextDecoration.combine(
+                                            buildList {
+                                                if (isUnderlinedState) add(TextDecoration.Underline)
+                                                if (isStrikethroughState) add(TextDecoration.LineThrough)
+                                            }
+                                        ),
+                                        color = textColorState,
+                                        fontSize = fontSizeState.sp,
+                                        fontFamily = fontFamilyState
+                                    )
+                                ) {
+                                    append(middlePart)
+                                }
+                            }
+                            
+                            // 3. Keep suffix spans (shifted)
+                            builder.append(oldA.subSequence(oldA.length - suffixLen, oldA.length))
+                            
+                            textFieldValue = newV.copy(annotatedString = builder.toAnnotatedString())
+                        } catch (e: Exception) {
+                            Log.e("TEXT_ERROR", "Error in prefix/suffix merge", e)
+                            textFieldValue = newV
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp),
@@ -564,14 +719,6 @@ fun CustomCanvas(
                     textStyle = LocalTextStyle.current.copy(
                         fontFamily = fontFamilyState,
                         textAlign = textAlignState,
-                        textDecoration = TextDecoration.combine(
-                            buildList {
-                                if (isUnderlinedState) add(TextDecoration.Underline)
-                                if (isStrikethroughState) add(TextDecoration.LineThrough)
-                            }
-                        ),
-                        fontWeight = if (isBoldState) FontWeight.Bold else FontWeight.Normal,
-                        fontStyle = if (isItalicState) FontStyle.Italic else FontStyle.Normal,
                         fontSize = fontSizeState.sp,
                         color = textColorState
                     ),
@@ -685,21 +832,98 @@ fun CustomCanvas(
         if (mode == CanvasMode.TEXT) {
             TextToolbar(
                 selectedFontFamily = fontFamilyState,
-                onFontFamilyChange = { fontFamilyState = it },
+                onFontFamilyChange = { 
+                    fontFamilyState = it 
+                    if (textFieldValue.selection.length > 0) {
+                        val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
+                        builder.addStyle(
+                            SpanStyle(fontFamily = it),
+                            textFieldValue.selection.start,
+                            textFieldValue.selection.end
+                        )
+                        textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
+                    }
+                },
                 textAlign = textAlignState,
                 onTextAlignChange = { textAlignState = it },
                 isUnderlined = isUnderlinedState,
-                onUnderlineChange = { isUnderlinedState = it },
+                onUnderlineChange = { 
+                    isUnderlinedState = it
+                    if (textFieldValue.selection.length > 0) {
+                        val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
+                        builder.addStyle(
+                            SpanStyle(textDecoration = if (it) TextDecoration.Underline else TextDecoration.None),
+                            textFieldValue.selection.start,
+                            textFieldValue.selection.end
+                        )
+                        textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
+                    }
+                },
                 isBold = isBoldState,
-                onBoldChange = { isBoldState = it },
+                onBoldChange = { 
+                    isBoldState = it
+                    if (textFieldValue.selection.length > 0) {
+                        val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
+                        builder.addStyle(
+                            SpanStyle(fontWeight = if (it) FontWeight.Bold else FontWeight.Normal),
+                            textFieldValue.selection.start,
+                            textFieldValue.selection.end
+                        )
+                        textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
+                    }
+                },
                 isItalic = isItalicState,
-                onItalicChange = { isItalicState = it },
+                onItalicChange = { 
+                    isItalicState = it
+                    if (textFieldValue.selection.length > 0) {
+                        val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
+                        builder.addStyle(
+                            SpanStyle(fontStyle = if (it) FontStyle.Italic else FontStyle.Normal),
+                            textFieldValue.selection.start,
+                            textFieldValue.selection.end
+                        )
+                        textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
+                    }
+                },
                 isStrikethrough = isStrikethroughState,
-                onStrikethroughChange = { isStrikethroughState = it },
+                onStrikethroughChange = { 
+                    isStrikethroughState = it
+                    if (textFieldValue.selection.length > 0) {
+                        val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
+                        builder.addStyle(
+                            SpanStyle(textDecoration = if (it) TextDecoration.LineThrough else TextDecoration.None),
+                            textFieldValue.selection.start,
+                            textFieldValue.selection.end
+                        )
+                        textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
+                    }
+                },
                 selectedColor = textColorState,
-                onColorChange = { textColorState = it },
+                onColorChange = { 
+                    textColorState = it
+                    if (textFieldValue.selection.length > 0) {
+                        val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
+                        builder.addStyle(
+                            SpanStyle(color = it),
+                            textFieldValue.selection.start,
+                            textFieldValue.selection.end
+                        )
+                        textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
+                    }
+                },
                 fontSize = fontSizeState,
-                onFontSizeChange = { fontSizeState = it }
+                onFontSizeChange = { 
+                    fontSizeState = it
+                    if (textFieldValue.selection.length > 0) {
+                        val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
+                        builder.addStyle(
+                            SpanStyle(fontSize = it.sp),
+                            textFieldValue.selection.start,
+                            textFieldValue.selection.end
+                        )
+                        textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
+                    }
+                }
             )
         }
     }

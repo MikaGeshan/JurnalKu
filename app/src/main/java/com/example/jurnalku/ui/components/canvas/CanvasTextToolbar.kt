@@ -219,17 +219,21 @@ private fun ToolbarToggleButton(
     onClick: () -> Unit,
     style: TextStyle
 ) {
-    IconButton(
-        modifier = Modifier.size(40.dp),
+    Surface(
         onClick = onClick,
-        colors = IconButtonDefaults.iconButtonColors(
-            containerColor = if (isSelected) JungleGreen else Color.Transparent,
-            contentColor = if (isSelected) Color.White else Black
-        )
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+        color = if (isSelected) JungleGreen else Color.White,
+        border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
+        modifier = Modifier.size(40.dp)
     ) {
-        Text(
-            text = text,
-            style = style.copy(fontSize = 16.sp)
-        )
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = text,
+                style = style.copy(
+                    fontSize = 18.sp,
+                    color = if (isSelected) Color.White else Black
+                )
+            )
+        }
     }
 }
