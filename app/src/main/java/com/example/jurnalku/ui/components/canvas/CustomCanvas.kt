@@ -829,11 +829,9 @@ fun CustomCanvas(
                     fontFamilyState = it 
                     if (textFieldValue.selection.length > 0) {
                         val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
-                        builder.addStyle(
-                            SpanStyle(fontFamily = it),
-                            textFieldValue.selection.start,
-                            textFieldValue.selection.end
-                        )
+                        val start = minOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                        val end = maxOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                        builder.addStyle(SpanStyle(fontFamily = it), start, end)
                         textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
                     }
                 },
@@ -844,10 +842,11 @@ fun CustomCanvas(
                     isUnderlinedState = it
                     if (textFieldValue.selection.length > 0) {
                         val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
+                        val start = minOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                        val end = maxOf(textFieldValue.selection.start, textFieldValue.selection.end)
                         builder.addStyle(
                             SpanStyle(textDecoration = if (it) TextDecoration.Underline else TextDecoration.None),
-                            textFieldValue.selection.start,
-                            textFieldValue.selection.end
+                            start, end
                         )
                         textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
                     }
@@ -857,10 +856,11 @@ fun CustomCanvas(
                     isBoldState = it
                     if (textFieldValue.selection.length > 0) {
                         val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
+                        val start = minOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                        val end = maxOf(textFieldValue.selection.start, textFieldValue.selection.end)
                         builder.addStyle(
                             SpanStyle(fontWeight = if (it) FontWeight.Bold else FontWeight.Normal),
-                            textFieldValue.selection.start,
-                            textFieldValue.selection.end
+                            start, end
                         )
                         textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
                     }
@@ -870,10 +870,11 @@ fun CustomCanvas(
                     isItalicState = it
                     if (textFieldValue.selection.length > 0) {
                         val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
+                        val start = minOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                        val end = maxOf(textFieldValue.selection.start, textFieldValue.selection.end)
                         builder.addStyle(
                             SpanStyle(fontStyle = if (it) FontStyle.Italic else FontStyle.Normal),
-                            textFieldValue.selection.start,
-                            textFieldValue.selection.end
+                            start, end
                         )
                         textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
                     }
@@ -883,10 +884,11 @@ fun CustomCanvas(
                     isStrikethroughState = it
                     if (textFieldValue.selection.length > 0) {
                         val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
+                        val start = minOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                        val end = maxOf(textFieldValue.selection.start, textFieldValue.selection.end)
                         builder.addStyle(
                             SpanStyle(textDecoration = if (it) TextDecoration.LineThrough else TextDecoration.None),
-                            textFieldValue.selection.start,
-                            textFieldValue.selection.end
+                            start, end
                         )
                         textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
                     }
@@ -896,11 +898,9 @@ fun CustomCanvas(
                     textColorState = it
                     if (textFieldValue.selection.length > 0) {
                         val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
-                        builder.addStyle(
-                            SpanStyle(color = it),
-                            textFieldValue.selection.start,
-                            textFieldValue.selection.end
-                        )
+                        val start = minOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                        val end = maxOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                        builder.addStyle(SpanStyle(color = it), start, end)
                         textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
                     }
                 },
