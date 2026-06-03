@@ -112,7 +112,6 @@ private fun annotatedStringToSpans(annotatedString: AnnotatedString): List<TextS
             isItalic = style.fontStyle == FontStyle.Italic,
             isUnderlined = style.textDecoration?.contains(TextDecoration.Underline) == true,
             isStrikethrough = style.textDecoration?.contains(TextDecoration.LineThrough) == true,
-            color = style.color.value.toLong(),
             fontFamily = style.fontFamily?.let { fontFamilyToString(it) } ?: "Default"
         )
     }
@@ -134,7 +133,6 @@ private fun spansToAnnotatedString(text: String, spans: List<TextSpanPayload>): 
                                 if (span.isStrikethrough) add(TextDecoration.LineThrough)
                             }
                         ),
-                        color = Color(span.color.toULong()),
                         fontFamily = stringToFontFamily(span.fontFamily)
                     ),
                     start = span.start,
@@ -364,10 +362,12 @@ fun CustomCanvas(
                 val end = range.end
                 
                 // Color
-                spannable.setSpan(
-                    android.text.style.ForegroundColorSpan(style.color.toArgb()),
-                    start, end, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                )
+                if (style.color != Color.Unspecified) {
+                    spannable.setSpan(
+                        android.text.style.ForegroundColorSpan(style.color.toArgb()),
+                        start, end, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                }
                 
                 // Size
                 if (style.fontSize.isSp) {
@@ -510,13 +510,13 @@ fun CustomCanvas(
 
     fun handleUndo() {
         if (paths.isNotEmpty()) {
-            undonePaths.add(paths.removeLast())
+            undonePaths.add(paths.removeAt(paths.size - 1))
         }
     }
 
     fun handleRedo() {
         if (undonePaths.isNotEmpty()) {
-            paths.add(undonePaths.removeLast())
+            paths.add(undonePaths.removeAt(undonePaths.size - 1))
         }
     }
 
@@ -687,7 +687,6 @@ fun CustomCanvas(
                                                 if (isStrikethroughState) add(TextDecoration.LineThrough)
                                             }
                                         ),
-                                        color = textColorState,
                                         fontFamily = fontFamilyState
                                     )
                                 ) {
@@ -896,13 +895,6 @@ fun CustomCanvas(
                 selectedColor = textColorState,
                 onColorChange = { 
                     textColorState = it
-                    if (textFieldValue.selection.length > 0) {
-                        val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
-                        val start = minOf(textFieldValue.selection.start, textFieldValue.selection.end)
-                        val end = maxOf(textFieldValue.selection.start, textFieldValue.selection.end)
-                        builder.addStyle(SpanStyle(color = it), start, end)
-                        textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
-                    }
                 },
                 fontSize = fontSizeState,
                 onFontSizeChange = { 
