@@ -113,7 +113,6 @@ private fun annotatedStringToSpans(annotatedString: AnnotatedString): List<TextS
             isUnderlined = style.textDecoration?.contains(TextDecoration.Underline) == true,
             isStrikethrough = style.textDecoration?.contains(TextDecoration.LineThrough) == true,
             color = style.color.value.toLong(),
-            fontSize = style.fontSize.isSp.let { if (it) style.fontSize.value else 16f },
             fontFamily = style.fontFamily?.let { fontFamilyToString(it) } ?: "Default"
         )
     }
@@ -136,7 +135,6 @@ private fun spansToAnnotatedString(text: String, spans: List<TextSpanPayload>): 
                             }
                         ),
                         color = Color(span.color.toULong()),
-                        fontSize = span.fontSize.sp,
                         fontFamily = stringToFontFamily(span.fontFamily)
                     ),
                     start = span.start,
@@ -690,7 +688,6 @@ fun CustomCanvas(
                                             }
                                         ),
                                         color = textColorState,
-                                        fontSize = fontSizeState.sp,
                                         fontFamily = fontFamilyState
                                     )
                                 ) {
@@ -910,15 +907,6 @@ fun CustomCanvas(
                 fontSize = fontSizeState,
                 onFontSizeChange = { 
                     fontSizeState = it
-                    if (textFieldValue.selection.length > 0) {
-                        val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
-                        builder.addStyle(
-                            SpanStyle(fontSize = it.sp),
-                            textFieldValue.selection.start,
-                            textFieldValue.selection.end
-                        )
-                        textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
-                    }
                 }
             )
         }
