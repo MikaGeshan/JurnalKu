@@ -112,6 +112,8 @@ private fun annotatedStringToSpans(annotatedString: AnnotatedString): List<TextS
             isItalic = style.fontStyle == FontStyle.Italic,
             isUnderlined = style.textDecoration?.contains(TextDecoration.Underline) == true,
             isStrikethrough = style.textDecoration?.contains(TextDecoration.LineThrough) == true,
+            color = if (style.color != Color.Unspecified) style.color.value.toLong() else 0xFF000000,
+            fontSize = if (style.fontSize.isSp) style.fontSize.value else 16f,
             fontFamily = style.fontFamily?.let { fontFamilyToString(it) } ?: "Default"
         )
     }
@@ -133,6 +135,8 @@ private fun spansToAnnotatedString(text: String, spans: List<TextSpanPayload>): 
                                 if (span.isStrikethrough) add(TextDecoration.LineThrough)
                             }
                         ),
+                        color = Color(span.color.toULong()),
+                        fontSize = span.fontSize.sp,
                         fontFamily = stringToFontFamily(span.fontFamily)
                     ),
                     start = span.start,
@@ -687,6 +691,8 @@ fun CustomCanvas(
                                                 if (isStrikethroughState) add(TextDecoration.LineThrough)
                                             }
                                         ),
+                                        color = textColorState,
+                                        fontSize = fontSizeState.sp,
                                         fontFamily = fontFamilyState
                                     )
                                 ) {
@@ -709,10 +715,10 @@ fun CustomCanvas(
                     placeholder = { Text("Start writing...") },
                     enabled = mode == CanvasMode.TEXT,
                     textStyle = LocalTextStyle.current.copy(
-                        fontFamily = fontFamilyState,
+                        fontFamily = FontFamily.Default, // Neutral base font
                         textAlign = textAlignState,
-                        fontSize = fontSizeState.sp,
-                        color = textColorState
+                        fontSize = 16.sp, // Neutral base size
+                        color = Color.Black // Neutral base color
                     ),
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent,
@@ -895,10 +901,24 @@ fun CustomCanvas(
                 selectedColor = textColorState,
                 onColorChange = { 
                     textColorState = it
+                    if (textFieldValue.selection.length > 0) {
+                        val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
+                        val start = minOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                        val end = maxOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                        builder.addStyle(SpanStyle(color = it), start, end)
+                        textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
+                    }
                 },
                 fontSize = fontSizeState,
                 onFontSizeChange = { 
                     fontSizeState = it
+                    if (textFieldValue.selection.length > 0) {
+                        val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
+                        val start = minOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                        val end = maxOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                        builder.addStyle(SpanStyle(fontSize = it.sp), start, end)
+                        textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
+                    }
                 }
             )
         }
