@@ -128,10 +128,10 @@ fun CreateJournalScreen(
                     modifier = Modifier
                         .padding(horizontal = 6.dp)
                         .size(48.dp)
-                        .background(color, RoundedCornerShape(12.dp))
+                        .background(color, RoundedCornerShape(28.dp))
                         .then(
                             if (selectedColor == color)
-                                Modifier.border(2.dp, JungleGreen, RoundedCornerShape(12.dp))
+                                Modifier.border(2.dp, JungleGreen, RoundedCornerShape(28.dp))
                             else Modifier
                         )
                         .clickable { selectedColor = color }
