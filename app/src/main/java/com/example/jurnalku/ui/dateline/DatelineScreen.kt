@@ -1,11 +1,12 @@
 package com.example.jurnalku.ui.dateline
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.jurnalku.ui.components.Calendar
@@ -16,6 +17,7 @@ import com.example.jurnalku.ui.components.pss.PSSForm
 import com.example.jurnalku.ui.components.icon.AppIconClass
 import com.example.jurnalku.ui.components.MoodData
 import com.example.jurnalku.ui.components.pss.StressResult
+import com.example.jurnalku.ui.theme.*
 import java.time.LocalDate
 
 @Composable
@@ -31,7 +33,10 @@ fun DatelineScreen(
     isLoading: Boolean,
     onPSSScoreCalculated: (Int) -> Unit,
 ) {
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -39,12 +44,20 @@ fun DatelineScreen(
         ) {
         item {
             Spacer(modifier = Modifier.height(24.dp))
-            Text(
-                text = "Your Journey",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
+            Column {
+                Text(
+                    text = "Your Journey",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                HorizontalDivider(
+                    modifier = Modifier.width(60.dp).padding(top = 4.dp),
+                    thickness = 4.dp,
+                    color = JungleGreen.copy(alpha = 0.5f)
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Tracking your moods and growth",
                 style = MaterialTheme.typography.bodyMedium,
@@ -65,12 +78,19 @@ fun DatelineScreen(
 
             item {
                 Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    text = "Your Mood",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                )
+                Column {
+                    Text(
+                        text = "Your Mood",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.width(60.dp).padding(top = 4.dp),
+                        thickness = 4.dp,
+                        color = JungleGreen.copy(alpha = 0.5f)
+                    )
+                }
                 Spacer(modifier = Modifier.height(24.dp))
             }
 

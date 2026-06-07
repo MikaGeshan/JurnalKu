@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,10 +32,7 @@ import com.example.jurnalku.ui.components.icon.AppIconClass
 import com.example.jurnalku.ui.components.icon.ComposableIcon
 import com.example.jurnalku.ui.journal.list.JournalEntry
 import com.example.jurnalku.ui.journal.list.RecentPageEntry
-import com.example.jurnalku.ui.theme.EmptyStateText
-import com.example.jurnalku.ui.theme.Grey
-import com.example.jurnalku.ui.theme.JungleGreen
-import com.example.jurnalku.ui.theme.SectionTitle
+import com.example.jurnalku.ui.theme.*
 
 @Composable
 fun EntriesScreen(
@@ -107,7 +105,10 @@ fun EntriesScreen(
         )
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -202,7 +203,14 @@ fun EntriesScreen(
 
         Spacer(modifier = Modifier.height(28.dp))
 
-        SectionTitle("How’s your day?")
+        Column {
+            SectionTitle("How’s your day?")
+            HorizontalDivider(
+                modifier = Modifier.width(40.dp).padding(top = 4.dp),
+                thickness = 3.dp,
+                color = JungleGreen.copy(alpha = 0.5f)
+            )
+        }
 
         Spacer(modifier = Modifier.height(14.dp))
 
@@ -217,23 +225,30 @@ fun EntriesScreen(
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.clickable(enabled = !isAnyMoodSelected) {
-                        lastSelectedIcon = mood.icon
-                        showConfetti = true
-                        showMoodPopup = true
-                        onMoodSelected(mood)
-                    }
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .clickable(enabled = !isAnyMoodSelected) {
+                            lastSelectedIcon = mood.icon
+                            showConfetti = true
+                            showMoodPopup = true
+                            onMoodSelected(mood)
+                        }
+                        .background(
+                            if (isSelected) mood.color.copy(alpha = 0.2f)
+                            else Color.Transparent
+                        )
+                        .padding(12.dp)
                 ) {
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
-                            .size(if (isSelected) 64.dp else 56.dp)
-                            .alpha(if (isAnyMoodSelected && !isSelected) 0.5f else 1f)
+                            .size(if (isSelected) 60.dp else 52.dp)
+                            .alpha(if (isAnyMoodSelected && !isSelected) 0.4f else 1f)
                     ) {
                         ComposableIcon(
                             icon = mood.icon,
                             tint = Color.Unspecified,
-                            size = if (isSelected) 44.dp else 36.dp
+                            size = if (isSelected) 48.dp else 40.dp
                         )
                     }
                 }
@@ -242,7 +257,14 @@ fun EntriesScreen(
 
         Spacer(modifier = Modifier.height(28.dp))
 
-        SectionTitle("My Journal")
+        Column {
+            SectionTitle("My Journal")
+            HorizontalDivider(
+                modifier = Modifier.width(40.dp).padding(top = 4.dp),
+                thickness = 3.dp,
+                color = JungleGreen.copy(alpha = 0.5f)
+            )
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -259,6 +281,7 @@ fun EntriesScreen(
                     modifier = Modifier
                         .width(160.dp)
                         .height(240.dp)
+                        .shadow(4.dp, RoundedCornerShape(12.dp))
                         .clip(RoundedCornerShape(12.dp))
                         .clickable {
                             if (isSelectionMode) {
@@ -323,7 +346,14 @@ fun EntriesScreen(
 
         Spacer(modifier = Modifier.height(28.dp))
 
-        SectionTitle("Recent Pages")
+        Column {
+            SectionTitle("Recent Pages")
+            HorizontalDivider(
+                modifier = Modifier.width(40.dp).padding(top = 4.dp),
+                thickness = 3.dp,
+                color = JungleGreen.copy(alpha = 0.5f)
+            )
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -338,6 +368,7 @@ fun EntriesScreen(
                         modifier = Modifier
                             .width(160.dp)
                             .height(240.dp)
+                            .shadow(4.dp, RoundedCornerShape(12.dp))
                             .clip(RoundedCornerShape(12.dp))
                             .clickable {
                                 onEditJournal(
