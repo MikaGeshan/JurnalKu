@@ -66,7 +66,9 @@ fun TextToolbar(
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = Color(0xFFF5F5F5),
-        shadowElevation = 8.dp
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+        shadowElevation = 8.dp,
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f))
     ) {
         Column(
             modifier = Modifier

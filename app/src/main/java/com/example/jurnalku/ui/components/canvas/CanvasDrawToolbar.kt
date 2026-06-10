@@ -31,6 +31,7 @@ fun DrawToolbar(
     selectedColor: Color,
     onToolSelected: (DrawTool) -> Unit,
     onColorSelected: (Color) -> Unit,
+    modifier: Modifier = Modifier,
     onClearAll: () -> Unit = {}
 ) {
 
@@ -44,73 +45,79 @@ fun DrawToolbar(
         Purple
     )
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFFF5F5F5))
-            .padding(12.dp)
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = Color(0xFFF5F5F5),
+        shape = RoundedCornerShape(16.dp),
+        shadowElevation = 8.dp,
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f))
     ) {
-
-        // tools
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+        Column(
+            modifier = Modifier
+                .padding(12.dp)
         ) {
-            DrawTool.values().forEach { tool ->
 
-                val isSelected = tool == selectedTool
-
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = if (isSelected) JungleGreen else Color.White,
-                    modifier = Modifier
-                        .clickable { onToolSelected(tool) }
-                ) {
-                    Text(
-                        text = tool.name.lowercase().replaceFirstChar { it.uppercase() },
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                        color = if (isSelected) Color.White else Black,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // pallete or clear button
-        if (selectedTool == DrawTool.ERASER) {
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = Color.White,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onClearAll() }
-            ) {
-                Text(
-                    text = "Clear All Drawings",
-                    modifier = Modifier.padding(vertical = 12.dp),
-                    color = Red,
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                )
-            }
-        } else {
+            // tools
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                colors.forEach { color ->
+                DrawTool.values().forEach { tool ->
 
-                    val isSelected = color == selectedColor
+                    val isSelected = tool == selectedTool
 
-                    Box(
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (isSelected) JungleGreen else Color.White,
                         modifier = Modifier
-                            .size(if (isSelected) 40.dp else 30.dp)
-                            .padding(if (isSelected) 2.dp else 0.dp)
-                            .background(color, shape = CircleShape)
-                            .clickable { onColorSelected(color) }
+                            .clickable { onToolSelected(tool) }
+                    ) {
+                        Text(
+                            text = tool.name.lowercase().replaceFirstChar { it.uppercase() },
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            color = if (isSelected) Color.White else Black,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // pallete or clear button
+            if (selectedTool == DrawTool.ERASER) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color.White,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onClearAll() }
+                ) {
+                    Text(
+                        text = "Clear All Drawings",
+                        modifier = Modifier.padding(vertical = 12.dp),
+                        color = Red,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    colors.forEach { color ->
+
+                        val isSelected = color == selectedColor
+
+                        Box(
+                            modifier = Modifier
+                                .size(if (isSelected) 40.dp else 30.dp)
+                                .padding(if (isSelected) 2.dp else 0.dp)
+                                .background(color, shape = CircleShape)
+                                .clickable { onColorSelected(color) }
+                        )
+                    }
                 }
             }
         }

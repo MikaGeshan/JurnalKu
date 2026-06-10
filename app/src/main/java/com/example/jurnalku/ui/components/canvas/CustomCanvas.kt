@@ -556,371 +556,387 @@ fun CustomCanvas(
         DrawTool.ERASER -> 20f
     }
     val drawColor = if (selectedTool == DrawTool.ERASER) paperColor else selectedColor
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .navigationBarsPadding()
-            .imePadding()
-            .padding(16.dp)
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
 
-        // header
-        CanvasHeader(
-            onClose = onClose,
-            onToggleDraw = {
-                mode = if (mode == CanvasMode.DRAW) CanvasMode.TEXT else CanvasMode.DRAW
-            },
-            onUndo = ::handleUndo,
-            onRedo = ::handleRedo,
-            canUndo = paths.isNotEmpty(),
-            canRedo = undonePaths.isNotEmpty(),
-            onExportJournal = ::exportPage,
-            onSave = ::handleSaveJournal,
-            onPickImage = {
-                photoPickerLauncher.launch(
-                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                )
-            },
-            onCreateNewPage = ::handleCreateNewPage,
-        )
+            // header
+            CanvasHeader(
+                onClose = onClose,
+                onToggleDraw = {
+                    mode = if (mode == CanvasMode.DRAW) CanvasMode.TEXT else CanvasMode.DRAW
+                },
+                onUndo = ::handleUndo,
+                onRedo = ::handleRedo,
+                canUndo = paths.isNotEmpty(),
+                canRedo = undonePaths.isNotEmpty(),
+                onExportJournal = ::exportPage,
+                onSave = ::handleSaveJournal,
+                onPickImage = {
+                    photoPickerLauncher.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    )
+                },
+                onCreateNewPage = ::handleCreateNewPage,
+            )
 
-        if (pages.size > 1) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = {
-                        if (currentPageIndex > 0) {
-                            saveCurrentPageState()
-                            currentPageIndex--
-                        }
-                    },
-                    enabled = currentPageIndex > 0
+            if (pages.size > 1) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("<", fontWeight = FontWeight.Bold)
-                }
-                Text(
-                    text = "Page ${currentPageIndex + 1} of ${pages.size}",
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-                IconButton(
-                    onClick = {
-                        if (currentPageIndex < pages.size - 1) {
-                            saveCurrentPageState()
-                            currentPageIndex++
-                        }
-                    },
-                    enabled = currentPageIndex < pages.size - 1
-                ) {
-                    Text(">", fontWeight = FontWeight.Bold)
+                    IconButton(
+                        onClick = {
+                            if (currentPageIndex > 0) {
+                                saveCurrentPageState()
+                                currentPageIndex--
+                            }
+                        },
+                        enabled = currentPageIndex > 0
+                    ) {
+                        Text("<", fontWeight = FontWeight.Bold)
+                    }
+                    Text(
+                        text = "Page ${currentPageIndex + 1} of ${pages.size}",
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                    IconButton(
+                        onClick = {
+                            if (currentPageIndex < pages.size - 1) {
+                                saveCurrentPageState()
+                                currentPageIndex++
+                            }
+                        },
+                        enabled = currentPageIndex < pages.size - 1
+                    ) {
+                        Text(">", fontWeight = FontWeight.Bold)
+                    }
                 }
             }
-        }
 
-        // default content
-        androidx.compose.material3.Surface(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
-            shadowElevation = 8.dp,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
-            color = paperColor
-        ) {
-            Box(
+            // default content
+            androidx.compose.material3.Surface(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .clipToBounds()
-                    .onGloballyPositioned { coordinates ->
-                        canvasSize = coordinates.size
-                    }
+                    .weight(1f)
+                    .fillMaxWidth(),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+                shadowElevation = 8.dp,
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
+                color = paperColor
             ) {
-
-                CanvasPattern(
-                    type = paperType
-                )
-
-                // text layer
-                TextField(
-                    value = textFieldValue,
-                    onValueChange = { newValue ->
-                        val oldV = textFieldValue
-                        val newV = newValue
-                        
-                        if (newV.text == oldV.text) {
-                            // Selection or cursor move
-                            textFieldValue = newV.copy(annotatedString = oldV.annotatedString)
-                            return@TextField
-                        }
-
-                        val oldA = oldV.annotatedString
-                        val newT = newV.text
-                        
-                        // Prefix/Suffix Diffing to preserve spans
-                        var prefixLen = 0
-                        while (prefixLen < oldA.text.length && prefixLen < newT.length && oldA.text[prefixLen] == newT[prefixLen]) {
-                            prefixLen++
-                        }
-                        
-                        var suffixLen = 0
-                        while (suffixLen < (oldA.text.length - prefixLen) && 
-                               suffixLen < (newT.length - prefixLen) && 
-                               oldA.text[oldA.text.length - 1 - suffixLen] == newT[newT.length - 1 - suffixLen]) {
-                            suffixLen++
-                        }
-                        
-                        val builder = AnnotatedString.Builder()
-                        try {
-                            // 1. Keep prefix spans
-                            builder.append(oldA.subSequence(0, prefixLen))
-                            
-                            // 2. Add styled new middle part
-                            val middlePart = newT.substring(prefixLen, newT.length - suffixLen)
-                            if (middlePart.isNotEmpty()) {
-                                builder.withStyle(
-                                    style = SpanStyle(
-                                        fontWeight = if (isBoldState) FontWeight.Bold else FontWeight.Normal,
-                                        fontStyle = if (isItalicState) FontStyle.Italic else FontStyle.Normal,
-                                        textDecoration = TextDecoration.combine(
-                                            buildList {
-                                                if (isUnderlinedState) add(TextDecoration.Underline)
-                                                if (isStrikethroughState) add(TextDecoration.LineThrough)
-                                            }
-                                        ),
-                                        color = textColorState,
-                                        fontSize = fontSizeState.sp,
-                                        fontFamily = fontFamilyState
-                                    )
-                                ) {
-                                    append(middlePart)
-                                }
-                            }
-                            
-                            // 3. Keep suffix spans (shifted)
-                            builder.append(oldA.subSequence(oldA.length - suffixLen, oldA.length))
-                            
-                            textFieldValue = newV.copy(annotatedString = builder.toAnnotatedString())
-                        } catch (e: Exception) {
-                            Log.e("TEXT_ERROR", "Error in prefix/suffix merge", e)
-                            textFieldValue = newV
-                        }
-                    },
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(16.dp),
-                    placeholder = { Text("Start writing...") },
-                    enabled = mode == CanvasMode.TEXT,
-                    textStyle = LocalTextStyle.current.copy(
-                        fontFamily = FontFamily.Default, // Neutral base font
-                        textAlign = textAlignState,
-                        fontSize = 16.sp, // Neutral base size
-                        color = Color.Black // Neutral base color
-                    ),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        disabledContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    )
-                )
+                        .clipToBounds()
+                        .onGloballyPositioned { coordinates ->
+                            canvasSize = coordinates.size
+                        }
+                ) {
 
-                // image layer - moved above TextField to catch touches
-                selectedImageBase64?.let { base64String ->
-                    val imageBytes = remember(base64String) {
-                        try {
-                            Base64.decode(base64String, Base64.DEFAULT)
-                        } catch (e: Exception) {
-                            null
+                    CanvasPattern(
+                        type = paperType
+                    )
+
+                    // text layer
+                    TextField(
+                        value = textFieldValue,
+                        onValueChange = { newValue ->
+                            val oldV = textFieldValue
+                            val newV = newValue
+                            
+                            if (newV.text == oldV.text) {
+                                // Selection or cursor move
+                                textFieldValue = newV.copy(annotatedString = oldV.annotatedString)
+                                return@TextField
+                            }
+
+                            val oldA = oldV.annotatedString
+                            val newT = newV.text
+                            
+                            // Prefix/Suffix Diffing to preserve spans
+                            var prefixLen = 0
+                            while (prefixLen < oldA.text.length && prefixLen < newT.length && oldA.text[prefixLen] == newT[prefixLen]) {
+                                prefixLen++
+                            }
+                            
+                            var suffixLen = 0
+                            while (suffixLen < (oldA.text.length - prefixLen) && 
+                                   suffixLen < (newT.length - prefixLen) && 
+                                   oldA.text[oldA.text.length - 1 - suffixLen] == newT[newT.length - 1 - suffixLen]) {
+                                suffixLen++
+                            }
+                            
+                            val builder = AnnotatedString.Builder()
+                            try {
+                                // 1. Keep prefix spans
+                                builder.append(oldA.subSequence(0, prefixLen))
+                                
+                                // 2. Add styled new middle part
+                                val middlePart = newT.substring(prefixLen, newT.length - suffixLen)
+                                if (middlePart.isNotEmpty()) {
+                                    builder.withStyle(
+                                        style = SpanStyle(
+                                            fontWeight = if (isBoldState) FontWeight.Bold else FontWeight.Normal,
+                                            fontStyle = if (isItalicState) FontStyle.Italic else FontStyle.Normal,
+                                            textDecoration = TextDecoration.combine(
+                                                buildList {
+                                                    if (isUnderlinedState) add(TextDecoration.Underline)
+                                                    if (isStrikethroughState) add(TextDecoration.LineThrough)
+                                                }
+                                            ),
+                                            color = textColorState,
+                                            fontSize = fontSizeState.sp,
+                                            fontFamily = fontFamilyState
+                                        )
+                                    ) {
+                                        append(middlePart)
+                                    }
+                                }
+                                
+                                // 3. Keep suffix spans (shifted)
+                                builder.append(oldA.subSequence(oldA.length - suffixLen, oldA.length))
+                                
+                                textFieldValue = newV.copy(annotatedString = builder.toAnnotatedString())
+                            } catch (e: Exception) {
+                                Log.e("TEXT_ERROR", "Error in prefix/suffix merge", e)
+                                textFieldValue = newV
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        placeholder = { Text("Start writing...") },
+                        enabled = mode == CanvasMode.TEXT,
+                        textStyle = LocalTextStyle.current.copy(
+                            fontFamily = FontFamily.Default, // Neutral base font
+                            textAlign = textAlignState,
+                            fontSize = 16.sp, // Neutral base size
+                            color = Color.Black // Neutral base color
+                        ),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            disabledContainerColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
+                        )
+                    )
+
+                    // image layer - moved above TextField to catch touches
+                    selectedImageBase64?.let { base64String ->
+                        val imageBytes = remember(base64String) {
+                            try {
+                                Base64.decode(base64String, Base64.DEFAULT)
+                            } catch (e: Exception) {
+                                null
+                            }
+                        }
+
+                        if (imageBytes != null) {
+                            AsyncImage(
+                                model = imageBytes,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .graphicsLayer(
+                                        translationX = imageOffset.x,
+                                        translationY = imageOffset.y,
+                                        scaleX = imageScale,
+                                        scaleY = imageScale,
+                                        rotationZ = imageRotation
+                                    )
+                                    .then(
+                                        if (mode == CanvasMode.TEXT) {
+                                            Modifier.pointerInput(Unit) {
+                                                detectTapGestures {
+                                                    mode = CanvasMode.IMAGE
+                                                }
+                                            }
+                                        } else Modifier
+                                    ),
+                                contentScale = ContentScale.Fit
+                            )
                         }
                     }
 
-                    if (imageBytes != null) {
-                        AsyncImage(
-                            model = imageBytes,
-                            contentDescription = null,
+                    // draw layer selalu tampil
+                    CanvasDrawMode(
+                        paths = paths,
+                        onPathAdded = ::handlePathAdded,
+                        enabled = mode == CanvasMode.DRAW,
+                        color = drawColor,
+                        strokeWidth = strokeWidth,
+                    )
+
+                    // Image transformation overlay
+                    if (mode == CanvasMode.IMAGE) {
+                        Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .graphicsLayer(
-                                    translationX = imageOffset.x,
-                                    translationY = imageOffset.y,
-                                    scaleX = imageScale,
-                                    scaleY = imageScale,
-                                    rotationZ = imageRotation
-                                )
-                                .then(
-                                    if (mode == CanvasMode.TEXT) {
-                                        Modifier.pointerInput(Unit) {
-                                            detectTapGestures {
-                                                mode = CanvasMode.IMAGE
-                                            }
-                                        }
-                                    } else Modifier
-                                ),
-                            contentScale = ContentScale.Fit
+                                .pointerInput(Unit) {
+                                    detectTapGestures {
+                                        mode = CanvasMode.TEXT
+                                    }
+                                }
+                                .pointerInput(Unit) {
+                                    detectTransformGestures { _, pan, zoom, rotation ->
+                                        // Constrain Scale
+                                        imageScale = (imageScale * zoom).coerceIn(0.2f, 8f)
+
+                                        // Apply Rotation
+                                        imageRotation += rotation
+
+                                        // Apply Pan with boundaries
+                                        val newOffset = imageOffset + pan
+
+                                        // Allow moving the image center up to its own scaled size away from canvas center
+                                        // This keeps at least a part of the image visible
+                                        val boundX = canvasSize.width.toFloat()
+                                        val boundY = canvasSize.height.toFloat()
+
+                                        imageOffset = Offset(
+                                            x = newOffset.x.coerceIn(-boundX, boundX),
+                                            y = newOffset.y.coerceIn(-boundY, boundY)
+                                        )
+                                    }
+                                }
                         )
                     }
-                }
-
-                // draw layer selalu tampil
-                CanvasDrawMode(
-                    paths = paths,
-                    onPathAdded = ::handlePathAdded,
-                    enabled = mode == CanvasMode.DRAW,
-                    color = drawColor,
-                    strokeWidth = strokeWidth,
-                )
-
-                // Image transformation overlay
-                if (mode == CanvasMode.IMAGE) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .pointerInput(Unit) {
-                                detectTapGestures {
-                                    mode = CanvasMode.TEXT
-                                }
-                            }
-                            .pointerInput(Unit) {
-                                detectTransformGestures { _, pan, zoom, rotation ->
-                                    // Constrain Scale
-                                    imageScale = (imageScale * zoom).coerceIn(0.2f, 8f)
-
-                                    // Apply Rotation
-                                    imageRotation += rotation
-
-                                    // Apply Pan with boundaries
-                                    val newOffset = imageOffset + pan
-
-                                    // Allow moving the image center up to its own scaled size away from canvas center
-                                    // This keeps at least a part of the image visible
-                                    val boundX = canvasSize.width.toFloat()
-                                    val boundY = canvasSize.height.toFloat()
-
-                                    imageOffset = Offset(
-                                        x = newOffset.x.coerceIn(-boundX, boundX),
-                                        y = newOffset.y.coerceIn(-boundY, boundY)
-                                    )
-                                }
-                            }
-                    )
                 }
             }
+            
+            // Spacer to avoid canvas bottom being hidden by floating toolbars
+            Spacer(modifier = Modifier.height(72.dp))
         }
 
-        // toolbar draw
-        if (mode == CanvasMode.DRAW) {
-            DrawToolbar(
-                selectedTool = selectedTool,
-                selectedColor = selectedColor,
-                onToolSelected = { selectedTool = it },
-                onColorSelected = {
-                    selectedColor = it
-                    Log.d("COLOR_DEBUG", "selectedColor = $it")
-                },
-                onClearAll = ::handleClearAll
-            )
-        }
+        // Floating toolbars
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .imePadding()
+                .padding(16.dp)
+        ) {
+            // toolbar draw
+            if (mode == CanvasMode.DRAW) {
+                DrawToolbar(
+                    selectedTool = selectedTool,
+                    selectedColor = selectedColor,
+                    onToolSelected = { selectedTool = it },
+                    onColorSelected = {
+                        selectedColor = it
+                        Log.d("COLOR_DEBUG", "selectedColor = $it")
+                    },
+                    onClearAll = ::handleClearAll
+                )
+            }
 
-        // toolbar text
-        if (mode == CanvasMode.TEXT) {
-            TextToolbar(
-                selectedFontFamily = fontFamilyState,
-                onFontFamilyChange = { 
-                    fontFamilyState = it 
-                    if (textFieldValue.selection.length > 0) {
-                        val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
-                        val start = minOf(textFieldValue.selection.start, textFieldValue.selection.end)
-                        val end = maxOf(textFieldValue.selection.start, textFieldValue.selection.end)
-                        builder.addStyle(SpanStyle(fontFamily = it), start, end)
-                        textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
+            // toolbar text
+            if (mode == CanvasMode.TEXT) {
+                TextToolbar(
+                    selectedFontFamily = fontFamilyState,
+                    onFontFamilyChange = { 
+                        fontFamilyState = it 
+                        if (textFieldValue.selection.length > 0) {
+                            val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
+                            val start = minOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                            val end = maxOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                            builder.addStyle(SpanStyle(fontFamily = it), start, end)
+                            textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
+                        }
+                    },
+                    textAlign = textAlignState,
+                    onTextAlignChange = { textAlignState = it },
+                    isUnderlined = isUnderlinedState,
+                    onUnderlineChange = { 
+                        isUnderlinedState = it
+                        if (textFieldValue.selection.length > 0) {
+                            val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
+                            val start = minOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                            val end = maxOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                            builder.addStyle(
+                                SpanStyle(textDecoration = if (it) TextDecoration.Underline else TextDecoration.None),
+                                start, end
+                            )
+                            textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
+                        }
+                    },
+                    isBold = isBoldState,
+                    onBoldChange = { 
+                        isBoldState = it
+                        if (textFieldValue.selection.length > 0) {
+                            val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
+                            val start = minOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                            val end = maxOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                            builder.addStyle(
+                                SpanStyle(fontWeight = if (it) FontWeight.Bold else FontWeight.Normal),
+                                start, end
+                            )
+                            textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
+                        }
+                    },
+                    isItalic = isItalicState,
+                    onItalicChange = { 
+                        isItalicState = it
+                        if (textFieldValue.selection.length > 0) {
+                            val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
+                            val start = minOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                            val end = maxOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                            builder.addStyle(
+                                SpanStyle(fontStyle = if (it) FontStyle.Italic else FontStyle.Normal),
+                                start, end
+                            )
+                            textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
+                        }
+                    },
+                    isStrikethrough = isStrikethroughState,
+                    onStrikethroughChange = { 
+                        isStrikethroughState = it
+                        if (textFieldValue.selection.length > 0) {
+                            val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
+                            val start = minOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                            val end = maxOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                            builder.addStyle(
+                                SpanStyle(textDecoration = if (it) TextDecoration.LineThrough else TextDecoration.None),
+                                start, end
+                            )
+                            textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
+                        }
+                    },
+                    selectedColor = textColorState,
+                    onColorChange = { 
+                        textColorState = it
+                        if (textFieldValue.selection.length > 0) {
+                            val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
+                            val start = minOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                            val end = maxOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                            builder.addStyle(SpanStyle(color = it), start, end)
+                            textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
+                        }
+                    },
+                    fontSize = fontSizeState,
+                    onFontSizeChange = { 
+                        fontSizeState = it
+                        if (textFieldValue.selection.length > 0) {
+                            val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
+                            val start = minOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                            val end = maxOf(textFieldValue.selection.start, textFieldValue.selection.end)
+                            builder.addStyle(SpanStyle(fontSize = it.sp), start, end)
+                            textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
+                        }
                     }
-                },
-                textAlign = textAlignState,
-                onTextAlignChange = { textAlignState = it },
-                isUnderlined = isUnderlinedState,
-                onUnderlineChange = { 
-                    isUnderlinedState = it
-                    if (textFieldValue.selection.length > 0) {
-                        val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
-                        val start = minOf(textFieldValue.selection.start, textFieldValue.selection.end)
-                        val end = maxOf(textFieldValue.selection.start, textFieldValue.selection.end)
-                        builder.addStyle(
-                            SpanStyle(textDecoration = if (it) TextDecoration.Underline else TextDecoration.None),
-                            start, end
-                        )
-                        textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
-                    }
-                },
-                isBold = isBoldState,
-                onBoldChange = { 
-                    isBoldState = it
-                    if (textFieldValue.selection.length > 0) {
-                        val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
-                        val start = minOf(textFieldValue.selection.start, textFieldValue.selection.end)
-                        val end = maxOf(textFieldValue.selection.start, textFieldValue.selection.end)
-                        builder.addStyle(
-                            SpanStyle(fontWeight = if (it) FontWeight.Bold else FontWeight.Normal),
-                            start, end
-                        )
-                        textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
-                    }
-                },
-                isItalic = isItalicState,
-                onItalicChange = { 
-                    isItalicState = it
-                    if (textFieldValue.selection.length > 0) {
-                        val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
-                        val start = minOf(textFieldValue.selection.start, textFieldValue.selection.end)
-                        val end = maxOf(textFieldValue.selection.start, textFieldValue.selection.end)
-                        builder.addStyle(
-                            SpanStyle(fontStyle = if (it) FontStyle.Italic else FontStyle.Normal),
-                            start, end
-                        )
-                        textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
-                    }
-                },
-                isStrikethrough = isStrikethroughState,
-                onStrikethroughChange = { 
-                    isStrikethroughState = it
-                    if (textFieldValue.selection.length > 0) {
-                        val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
-                        val start = minOf(textFieldValue.selection.start, textFieldValue.selection.end)
-                        val end = maxOf(textFieldValue.selection.start, textFieldValue.selection.end)
-                        builder.addStyle(
-                            SpanStyle(textDecoration = if (it) TextDecoration.LineThrough else TextDecoration.None),
-                            start, end
-                        )
-                        textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
-                    }
-                },
-                selectedColor = textColorState,
-                onColorChange = { 
-                    textColorState = it
-                    if (textFieldValue.selection.length > 0) {
-                        val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
-                        val start = minOf(textFieldValue.selection.start, textFieldValue.selection.end)
-                        val end = maxOf(textFieldValue.selection.start, textFieldValue.selection.end)
-                        builder.addStyle(SpanStyle(color = it), start, end)
-                        textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
-                    }
-                },
-                fontSize = fontSizeState,
-                onFontSizeChange = { 
-                    fontSizeState = it
-                    if (textFieldValue.selection.length > 0) {
-                        val builder = AnnotatedString.Builder(textFieldValue.annotatedString)
-                        val start = minOf(textFieldValue.selection.start, textFieldValue.selection.end)
-                        val end = maxOf(textFieldValue.selection.start, textFieldValue.selection.end)
-                        builder.addStyle(SpanStyle(fontSize = it.sp), start, end)
-                        textFieldValue = textFieldValue.copy(annotatedString = builder.toAnnotatedString())
-                    }
-                }
-            )
+                )
+            }
         }
     }
 }
