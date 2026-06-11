@@ -1,5 +1,6 @@
 package com.example.jurnalku.ui.journal.list
 
+import android.content.Context
 import android.util.Base64
 import android.util.Log
 import com.google.firebase.firestore.FieldValue
@@ -101,105 +102,65 @@ class JournalRepository {
     }
 
     fun saveRecentPage(
+        context: Context,
         uid: String,
         recentPage: RecentPageEntry,
         onSuccess: () -> Unit = {},
         onError: (Exception) -> Unit = {}
     ) {
-        val docId = "${uid}_${recentPage.journalId}_${recentPage.pageIndex}"
-        
-        // Serialize paths to JSON for storage
-        val pathsJson = Gson().toJson(recentPage.paths)
+        try {
+            val prefs = context.getSharedPreferences("recent_pages_prefs", Context.MODE_PRIVATE)
+            val key = "recent_pages_$uid"
+            
+            val existingJson = prefs.getString(key, null)
+            val type = object : com.google.gson.reflect.TypeToken<MutableList<RecentPageEntry>>() {}.type
+            val recentList: MutableList<RecentPageEntry> = if (existingJson != null) {
+                Gson().fromJson(existingJson, type)
+            } else {
+                mutableListOf()
+            }
 
-        val data = mapOf(
-            "uid" to uid,
-            "journal_id" to recentPage.journalId,
-            "journal_name" to recentPage.journalName,
-            "page_index" to recentPage.pageIndex,
-            "paper_type" to recentPage.paperType,
-            "paper_color" to recentPage.paperColor,
-            "text" to recentPage.text,
-            "paths_json" to pathsJson,
-            "image_base64" to recentPage.imageBase64,
-            "image_offset_x" to recentPage.imageOffsetX,
-            "image_offset_y" to recentPage.imageOffsetY,
-            "image_scale" to recentPage.imageScale,
-            "image_rotation" to recentPage.imageRotation,
-            "font_family" to recentPage.fontFamily,
-            "text_align" to recentPage.textAlign,
-            "is_underlined" to recentPage.isUnderlined,
-            "is_bold" to recentPage.isBold,
-            "is_italic" to recentPage.isItalic,
-            "is_strikethrough" to recentPage.isStrikethrough,
-            "text_color" to recentPage.textColor,
-            "font_size" to recentPage.fontSize,
-            "spans_json" to Gson().toJson(recentPage.spans),
-            "timestamp" to FieldValue.serverTimestamp()
-        )
-
-        db.collection("recent_pages")
-            .document(docId)
-            .set(data)
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { onError(it) }
+            // Remove if exists (same journal and page)
+            recentList.removeAll { it.journalId == recentPage.journalId && it.pageIndex == recentPage.pageIndex }
+            
+            // Add to front
+            recentList.add(0, recentPage.copy(timestamp = System.currentTimeMillis()))
+            
+            // Limit to 10
+            val limitedList = recentList.take(10)
+            
+            val newJson = Gson().toJson(limitedList)
+            prefs.edit().putString(key, newJson).apply()
+            
+            Log.d("JournalRepository", "Saved recent page locally for $uid")
+            onSuccess()
+        } catch (e: Exception) {
+            Log.e("JournalRepository", "Failed to save recent page locally", e)
+            onError(e)
+        }
     }
 
     fun getRecentPages(
+        context: Context,
         uid: String,
         onSuccess: (List<RecentPageEntry>) -> Unit,
         onError: (Exception) -> Unit
     ) {
-        db.collection("recent_pages")
-            .whereEqualTo("uid", uid)
-            .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
-            .limit(10)
-            .get()
-            .addOnSuccessListener { result ->
-                val recentPages = result.documents.mapNotNull { doc ->
-                    try {
-                        val pathsJson = doc.getString("paths_json")
-                        val type = object : com.google.gson.reflect.TypeToken<List<DrawPathPayload>>() {}.type
-                        val paths = if (pathsJson != null) {
-                            Gson().fromJson<List<DrawPathPayload>>(pathsJson, type)
-                        } else emptyList()
-
-                        Log.d("GET_RECENT_PAGES", "Parsed page: ${doc.id}, paths: ${paths.size}, text: ${doc.getString("text")?.length ?: 0}")
-
-                        RecentPageEntry(
-                            journalId = doc.getString("journal_id") ?: "",
-                            journalName = doc.getString("journal_name") ?: "",
-                            pageIndex = doc.getLong("page_index")?.toInt() ?: 0,
-                            paperType = doc.getString("paper_type") ?: "",
-                            paperColor = doc.getLong("paper_color") ?: 0L,
-                            text = doc.getString("text") ?: "",
-                            paths = paths,
-                            imageBase64 = doc.getString("image_base64"),
-                            imageOffsetX = doc.getDouble("image_offset_x")?.toFloat() ?: 0f,
-                            imageOffsetY = doc.getDouble("image_offset_y")?.toFloat() ?: 0f,
-                            imageScale = doc.getDouble("image_scale")?.toFloat() ?: 1f,
-                            imageRotation = doc.getDouble("image_rotation")?.toFloat() ?: 0f,
-                            fontFamily = doc.getString("font_family") ?: "Default",
-                            textAlign = doc.getString("text_align") ?: "Left",
-                            isUnderlined = doc.getBoolean("is_underlined") ?: false,
-                            isBold = doc.getBoolean("is_bold") ?: false,
-                            isItalic = doc.getBoolean("is_italic") ?: false,
-                            isStrikethrough = doc.getBoolean("is_strikethrough") ?: false,
-                            textColor = doc.getLong("text_color") ?: 0xFF000000,
-                            fontSize = doc.getDouble("font_size")?.toFloat() ?: 16f,
-                            spans = try {
-                                val spansJson = doc.getString("spans_json")
-                                val spansType = object : com.google.gson.reflect.TypeToken<List<TextSpanPayload>>() {}.type
-                                if (spansJson != null) Gson().fromJson<List<TextSpanPayload>>(spansJson, spansType) else emptyList()
-                            } catch (e: Exception) { emptyList() },
-                            timestamp = doc.getTimestamp("timestamp")?.toDate()?.time ?: 0L
-                        )
-                    } catch (e: Exception) {
-                        Log.e("GET_RECENT_PAGES", "Failed to parse page", e)
-                        null
-                    }
-                }
-                onSuccess(recentPages)
+        try {
+            val prefs = context.getSharedPreferences("recent_pages_prefs", Context.MODE_PRIVATE)
+            val key = "recent_pages_$uid"
+            val json = prefs.getString(key, null)
+            
+            if (json != null) {
+                val type = object : com.google.gson.reflect.TypeToken<List<RecentPageEntry>>() {}.type
+                val pages = Gson().fromJson<List<RecentPageEntry>>(json, type)
+                onSuccess(pages)
+            } else {
+                onSuccess(emptyList())
             }
-            .addOnFailureListener { onError(it) }
+        } catch (e: Exception) {
+            Log.e("JournalRepository", "Failed to get recent pages locally", e)
+            onError(e)
+        }
     }
 }

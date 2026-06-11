@@ -35,6 +35,7 @@ fun CreateJournalContainer(
 ) {
 
     val repository = remember { JournalRepository() }
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     val authStore: AuthStore = viewModel()
     val user by authStore.user.collectAsState()
@@ -81,6 +82,7 @@ fun CreateJournalContainer(
                 // Save as recent page
                 if (pages.isNotEmpty()) {
                     repository.saveRecentPage(
+                        context = context,
                         uid = uid,
                         recentPage = pages.first().toRecentPageEntry(
                             journalId = journalEntry.journalId,

@@ -23,6 +23,7 @@ fun EditJournalContainer(
     navController: NavController
 ) {
     val repository = remember { JournalRepository() }
+    val context = androidx.compose.ui.platform.LocalContext.current
     val authStore: AuthStore = viewModel()
     val user by authStore.user.collectAsState()
 
@@ -43,6 +44,7 @@ fun EditJournalContainer(
                 // Save first page as recent for now
                 if (journal.pages.isNotEmpty()) {
                     repository.saveRecentPage(
+                        context = context,
                         uid = uid,
                         recentPage = journal.pages.first().toRecentPageEntry(
                             journalId = journalId,
@@ -68,6 +70,7 @@ fun EditJournalContainer(
                 // Update recent page info when saving
                 if (updatedPages.isNotEmpty()) {
                     repository.saveRecentPage(
+                        context = context,
                         uid = uid,
                         recentPage = updatedPages.first().toRecentPageEntry(
                             journalId = journalId,

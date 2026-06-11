@@ -25,6 +25,7 @@ fun EntriesContainer(
     val user by authStore.user.collectAsState()
     val getUserName = user?.name?.split(" ")?.firstOrNull() ?: "User"
     val getUserUid = user?.uid ?: return
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     val selectedMood by moodStore.selectedMood.collectAsState()
     val todayMoodCount by moodStore.todayMoodCount.collectAsState()
@@ -53,7 +54,7 @@ fun EntriesContainer(
         onSuccess: (List<RecentPageEntry>) -> Unit,
         onError: (Exception) -> Unit
     ) {
-        repository.getRecentPages(uid, onSuccess, onError)
+        repository.getRecentPages(context, uid, onSuccess, onError)
     }
 
     fun getListJournal(
