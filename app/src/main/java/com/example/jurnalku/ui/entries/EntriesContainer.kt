@@ -27,6 +27,7 @@ fun EntriesContainer(
     val getUserUid = user?.uid ?: return
 
     val selectedMood by moodStore.selectedMood.collectAsState()
+    val todayMoodCount by moodStore.todayMoodCount.collectAsState()
     val isMoodLoading by moodStore.isLoading.collectAsState()
 
     val repository = remember { JournalRepository() }
@@ -41,7 +42,9 @@ fun EntriesContainer(
     }
 
     fun handleMoodSelect(mood: MoodClass) {
-        moodStore.saveMood(getUserUid, mood)
+        if (todayMoodCount < 3) {
+            moodStore.saveMood(getUserUid, mood)
+        }
     }
 
 
@@ -152,6 +155,7 @@ fun EntriesContainer(
         name = getUserName,
         isLoading = isLoading || isMoodLoading,
         selectedMood = selectedMood,
+        todayMoodCount = todayMoodCount,
         onMoodSelected = ::handleMoodSelect,
         onNavigateCreateJournal = onNavigateCreateJournal,
         getListJournal = ::getListJournal,

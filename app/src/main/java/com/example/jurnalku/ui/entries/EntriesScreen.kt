@@ -40,6 +40,7 @@ fun EntriesScreen(
     name: String,
     isLoading: Boolean,
     selectedMood: MoodClass?,
+    todayMoodCount: Int,
     onMoodSelected: (MoodClass) -> Unit,
     onNavigateCreateJournal: () -> Unit,
     getListJournal: (
@@ -221,13 +222,13 @@ fun EntriesScreen(
             MoodClass.all.forEach { mood ->
 
                 val isSelected = selectedMood == mood
-                val isAnyMoodSelected = selectedMood != null
+                val isLimitReached = todayMoodCount >= 3
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .clip(RoundedCornerShape(20.dp))
-                        .clickable(enabled = !isAnyMoodSelected) {
+                        .clickable(enabled = !isLimitReached) {
                             lastSelectedIcon = mood.icon
                             showConfetti = true
                             showMoodPopup = true
@@ -243,7 +244,7 @@ fun EntriesScreen(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .size(if (isSelected) 60.dp else 52.dp)
-                            .alpha(if (isAnyMoodSelected && !isSelected) 0.4f else 1f)
+                            .alpha(if (isLimitReached && !isSelected) 0.4f else 1f)
                     ) {
                         ComposableIcon(
                             icon = mood.icon,

@@ -557,13 +557,12 @@ fun CustomCanvas(
     }
     val drawColor = if (selectedTool == DrawTool.ERASER) paperColor else selectedColor
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .navigationBarsPadding()
+        modifier = Modifier.fillMaxSize()
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
                 .padding(16.dp)
         ) {
 
@@ -824,8 +823,8 @@ fun CustomCanvas(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .imePadding()
-                .padding(16.dp)
+                .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars))
+                .padding(start = 16.dp, end = 16.dp, bottom = 4.dp)
         ) {
             // toolbar draw
             if (mode == CanvasMode.DRAW) {

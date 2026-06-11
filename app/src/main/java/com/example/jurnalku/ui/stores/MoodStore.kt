@@ -1,6 +1,7 @@
 package com.example.jurnalku.ui.stores
 
 import android.app.Application
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import com.example.jurnalku.ui.components.MoodData
@@ -18,6 +19,7 @@ import java.util.*
 
 class MoodStore(application: Application) : AndroidViewModel(application) {
     private val db = FirebaseFirestore.getInstance()
+    private val prefs = application.getSharedPreferences("mood_prefs", Context.MODE_PRIVATE)
 
     private val _selectedMood = MutableStateFlow<MoodClass?>(null)
     val selectedMood: StateFlow<MoodClass?> = _selectedMood
@@ -42,8 +44,22 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
 
     private val _latestBatchSize = MutableStateFlow(0)
     val latestBatchSize: StateFlow<Int> = _latestBatchSize
+
+    private val _todayMoodCount = MutableStateFlow(0)
+    val todayMoodCount: StateFlow<Int> = _todayMoodCount
+
     private fun getTodayDate(): String = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
     val today = getTodayDate()
+
+    init {
+        _todayMoodCount.value = prefs.getInt("press_count_$today", 0)
+    }
+
+    private fun incrementTodayCount() {
+        val newCount = _todayMoodCount.value + 1
+        _todayMoodCount.value = newCount
+        prefs.edit().putInt("press_count_$today", newCount).apply()
+    }
 
     fun calculateWeeklyStats(date: Date = Date()) {
         val cal = Calendar.getInstance()
@@ -254,6 +270,7 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
                         "last_updated", today
                     )?.addOnSuccessListener {
                         _selectedMood.value = mood
+                        incrementTodayCount()
                         fetchTodayMood(uid) 
                         _isLoading.value = false
                         onSuccess()
@@ -295,6 +312,7 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
                         "last_updated", today
                     ).addOnSuccessListener {
                         _selectedMood.value = mood
+                        incrementTodayCount()
                         fetchTodayMood(uid) 
                         _isLoading.value = false
                         onSuccess()
@@ -313,6 +331,7 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
                     db.collection("mood_entries").add(newPayload)
                         .addOnSuccessListener {
                             _selectedMood.value = mood
+                            incrementTodayCount()
                             fetchTodayMood(uid)
                             _isLoading.value = false
                             onSuccess()

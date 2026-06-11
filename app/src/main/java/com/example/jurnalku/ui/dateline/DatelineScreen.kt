@@ -95,7 +95,7 @@ fun DatelineScreen(
             }
 
         item {
-            CustomCard(title = "Weekly Analysis") {
+            CustomCard(title = "Monthly Analysis") {
                 MoodCounter(
                     moods = weeklyMoodData,
                     stressResult = stressResult
