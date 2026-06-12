@@ -24,7 +24,7 @@ data class JournalPagePayload(
     val contentId: String = "",
     val text: String = "",
     val paperType: String = "",
-    val paperColor: Long = 0L,
+    val paperColor: Long = 0xFFFFFFFF,
     val paths: List<DrawPathPayload> = emptyList(),
     val imageBase64: String? = null,
     val imageOffsetX: Float = 0f,
@@ -49,7 +49,7 @@ data class DrawPointPayload(
 
 data class DrawPathPayload(
     val points: List<DrawPointPayload> = emptyList(),
-    val color: Long = 0L,
+    val color: Long = 0xFF000000,
     val strokeWidth: Float = 0f
 )
 
@@ -58,7 +58,7 @@ data class RecentPageEntry(
     val journalName: String = "",
     val pageIndex: Int = 0,
     val paperType: String = "",
-    val paperColor: Long = 0L,
+    val paperColor: Long = 0xFFFFFFFF,
     val text: String = "",
     val paths: List<DrawPathPayload> = emptyList(),
     val imageBase64: String? = null,

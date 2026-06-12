@@ -112,7 +112,7 @@ private fun annotatedStringToSpans(annotatedString: AnnotatedString): List<TextS
             isItalic = style.fontStyle == FontStyle.Italic,
             isUnderlined = style.textDecoration?.contains(TextDecoration.Underline) == true,
             isStrikethrough = style.textDecoration?.contains(TextDecoration.LineThrough) == true,
-            color = if (style.color != Color.Unspecified) style.color.value.toLong() else 0xFF000000,
+            color = if (style.color != Color.Unspecified) style.color.toArgb().toLong() else defaultColor.toArgb().toLong(),
             fontSize = if (style.fontSize.isSp) style.fontSize.value else 16f,
             fontFamily = style.fontFamily?.let { fontFamilyToString(it) } ?: "Default"
         )
@@ -135,7 +135,7 @@ private fun spansToAnnotatedString(text: String, spans: List<TextSpanPayload>): 
                                 if (span.isStrikethrough) add(TextDecoration.LineThrough)
                             }
                         ),
-                        color = Color(span.color.toULong()),
+                        color = Color(span.color.toInt()),
                         fontSize = span.fontSize.sp,
                         fontFamily = stringToFontFamily(span.fontFamily)
                     ),
@@ -165,7 +165,7 @@ fun CustomCanvas(
                 add(JournalPagePayload(
                     contentId = UUID.randomUUID().toString(),
                     paperType = paperType,
-                    paperColor = paperColor.value.toLong()
+                    paperColor = paperColor.toArgb().toLong()
                 ))
             } else {
                 addAll(initialPages)
@@ -191,7 +191,7 @@ fun CustomCanvas(
     var isBoldState by remember { mutableStateOf(false) }
     var isItalicState by remember { mutableStateOf(false) }
     var isStrikethroughState by remember { mutableStateOf(false) }
-    var textColorState by remember { mutableStateOf(Color.Black) }
+    var textColorState by remember { mutableStateOf(defaultColor) }
     var fontSizeState by remember { mutableStateOf(16f) }
 
     // Load page data when index changes
@@ -213,14 +213,14 @@ fun CustomCanvas(
         isBoldState = currentPage.isBold
         isItalicState = currentPage.isItalic
         isStrikethroughState = currentPage.isStrikethrough
-        textColorState = Color(currentPage.textColor.toULong())
+        textColorState = Color(currentPage.textColor.toInt())
         fontSizeState = currentPage.fontSize
 
         paths.clear()
         paths.addAll(currentPage.paths.map { payload ->
             DrawPath(
                 points = payload.points.map { Offset(it.x, it.y) },
-                color = Color(payload.color.toULong()),
+                color = Color(payload.color.toInt()),
                 strokeWidth = payload.strokeWidth
             )
         })
@@ -245,12 +245,12 @@ fun CustomCanvas(
             isBold = isBoldState,
             isItalic = isItalicState,
             isStrikethrough = isStrikethroughState,
-            textColor = textColorState.value.toLong(),
+            textColor = textColorState.toArgb().toLong(),
             fontSize = fontSizeState,
             paths = paths.map { path ->
                 DrawPathPayload(
                     points = path.points.map { DrawPointPayload(it.x, it.y) },
-                    color = path.color.value.toLong(),
+                    color = path.color.toArgb().toLong(),
                     strokeWidth = path.strokeWidth
                 )
             }
@@ -388,8 +388,14 @@ fun CustomCanvas(
                     FontFamily.Monospace -> android.graphics.Typeface.MONOSPACE
                     else -> baseTypeface
                 }
-                val styleInt = (if (style.fontWeight == FontWeight.Bold) android.graphics.Typeface.BOLD else 0) or
-                               (if (style.fontStyle == FontStyle.Italic) android.graphics.Typeface.ITALIC else 0)
+                val isBold = style.fontWeight == FontWeight.Bold
+                val isItalic = style.fontStyle == FontStyle.Italic
+                val styleInt = when {
+                    isBold && isItalic -> android.graphics.Typeface.BOLD_ITALIC
+                    isBold -> android.graphics.Typeface.BOLD
+                    isItalic -> android.graphics.Typeface.ITALIC
+                    else -> android.graphics.Typeface.NORMAL
+                }
                 val tf = android.graphics.Typeface.create(tfBase, styleInt)
                 spannable.setSpan(
                     android.text.style.TypefaceSpan(tf),
@@ -544,7 +550,7 @@ fun CustomCanvas(
         pages.add(JournalPagePayload(
             contentId = UUID.randomUUID().toString(),
             paperType = paperType,
-            paperColor = paperColor.value.toLong()
+            paperColor = paperColor.toArgb().toLong()
         ))
         currentPageIndex = pages.size - 1
     }
@@ -720,7 +726,7 @@ fun CustomCanvas(
                             fontFamily = FontFamily.Default, // Neutral base font
                             textAlign = textAlignState,
                             fontSize = 16.sp, // Neutral base size
-                            color = Color.Black // Neutral base color
+                            color = defaultColor // Neutral base color
                         ),
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.Transparent,
