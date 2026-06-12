@@ -91,6 +91,7 @@ class JournalRepository {
     }
 
     fun deleteJournal(
+        context: Context,
         uid: String,
         journalId: String,
         journalName: String,
@@ -102,6 +103,23 @@ class JournalRepository {
             .delete()
             .addOnSuccessListener {
                 logActivity(uid, "JOURNAL_DELETED", journalName)
+                
+                // Clear from recent pages cache
+                try {
+                    val prefs = context.getSharedPreferences("recent_pages_prefs", Context.MODE_PRIVATE)
+                    val key = "recent_pages_$uid"
+                    val existingJson = prefs.getString(key, null)
+                    if (existingJson != null) {
+                        val type = object : com.google.gson.reflect.TypeToken<MutableList<RecentPageEntry>>() {}.type
+                        val recentList: MutableList<RecentPageEntry> = Gson().fromJson(existingJson, type)
+                        if (recentList.removeAll { it.journalId == journalId }) {
+                            prefs.edit().putString(key, Gson().toJson(recentList)).apply()
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("JournalRepository", "Failed to clear deleted journal from cache", e)
+                }
+
                 onSuccess()
             }
             .addOnFailureListener { onError(it) }

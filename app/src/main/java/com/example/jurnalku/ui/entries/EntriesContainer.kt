@@ -126,6 +126,7 @@ fun EntriesContainer(
     ) {
         isLoading = true
         repository.deleteJournal(
+            context = context,
             uid = getUserUid,
             journalId = journalId,
             journalName = journalName,
