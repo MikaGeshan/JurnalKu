@@ -102,7 +102,7 @@ fun PSSForm(
                 text = result,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = if (score >= 12) Color.Red else if (score >= 6) Color(0xFFFFA500) else Color(0xFF4CAF50)
+                color = if (score >= 12) Color.Red else if (score >= 6) Color(0xFFFFA500.toInt()) else Color(0xFF4CAF50.toInt())
             )
             Spacer(modifier = Modifier.height(24.dp))
             Text(

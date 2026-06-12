@@ -38,6 +38,7 @@ import com.example.jurnalku.ui.components.icon.ComposableIcon
 import com.example.jurnalku.ui.theme.Black
 import com.example.jurnalku.ui.theme.Grey
 import com.example.jurnalku.ui.theme.JungleGreen
+import com.example.jurnalku.ui.theme.safeColor
 
 @Composable
 fun JournalListScreen(
@@ -121,7 +122,7 @@ fun JournalListScreen(
             ) {
                 PaperTypePreview(
                     type = journal.paperType,
-                    color = Color(journal.paperColor.toULong()),
+                    color = safeColor(journal.paperColor),
                     isSelected = false,
                     modifier = Modifier.fillMaxSize()
                 )

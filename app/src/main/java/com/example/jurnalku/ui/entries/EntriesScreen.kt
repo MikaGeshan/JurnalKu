@@ -33,6 +33,7 @@ import com.example.jurnalku.ui.components.icon.ComposableIcon
 import com.example.jurnalku.ui.journal.list.JournalEntry
 import com.example.jurnalku.ui.journal.list.RecentPageEntry
 import com.example.jurnalku.ui.theme.*
+import com.example.jurnalku.ui.theme.safeColor
 
 @Composable
 fun EntriesScreen(
@@ -300,7 +301,7 @@ fun EntriesScreen(
 
                     PaperTypePreview(
                         type = journal.paperType,
-                        color = Color(journal.paperColor.toULong()),
+                        color = safeColor(journal.paperColor),
                         isSelected = isSelected,
                         modifier = Modifier.fillMaxSize()
                     )

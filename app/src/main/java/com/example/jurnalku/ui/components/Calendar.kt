@@ -275,7 +275,7 @@ private fun DaySummarySheet(
             
             val (label, actionColor, icon) = when (type) {
                 "JOURNAL_CREATED" -> Triple("Journal created: $name", JungleGreen, AppIconClass.Check)
-                "JOURNAL_UPDATED" -> Triple("Journal updated: $name", Color(0xFF2196F3), AppIconClass.Check)
+                "JOURNAL_UPDATED" -> Triple("Journal updated: $name", Color(0xFF2196F3.toInt()), AppIconClass.Check)
                 "JOURNAL_DELETED" -> Triple("Journal deleted: $name", Color.Red, AppIconClass.Check)
                 else -> Triple("Action performed", Grey, AppIconClass.Check)
             }

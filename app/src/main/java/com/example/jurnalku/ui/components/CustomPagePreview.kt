@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.jurnalku.ui.journal.list.RecentPageEntry
 import com.example.jurnalku.ui.theme.JungleGreen
+import com.example.jurnalku.ui.theme.safeColor
 
 @Composable
 fun PagePreview(
@@ -43,7 +44,7 @@ fun PagePreview(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color(recentPage.paperColor.toULong()), RoundedCornerShape(12.dp))
+            .background(safeColor(recentPage.paperColor), RoundedCornerShape(12.dp))
             .clip(RoundedCornerShape(12.dp))
             .border(
                 width = 0.dp,
@@ -151,7 +152,7 @@ fun PagePreview(
                     
                     drawPath(
                         path = p,
-                        color = Color(pathPayload.color.toULong()).copy(alpha = 0.8f),
+                        color = safeColor(pathPayload.color).copy(alpha = 0.8f),
                         style = Stroke(
                             width = pathPayload.strokeWidth * scale,
                             cap = StrokeCap.Round,

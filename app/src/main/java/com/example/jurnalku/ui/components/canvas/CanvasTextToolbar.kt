@@ -53,19 +53,19 @@ fun TextToolbar(
 
     val colors = listOf(
         Black,
-        Color(0xFFF44336), // Red
-        Color(0xFFFF9800), // Orange
-        Color(0xFFFFEB3B), // Yellow
-        Color(0xFF4CAF50), // Green
-        Color(0xFF2196F3), // Blue
-        Color(0xFF9C27B0), // Purple
-        Color(0xFF795548), // Brown
-        Color(0xFF9E9E9E)  // Gray
+        Color(0xFFF44336.toInt()), // Red
+        Color(0xFFFF9800.toInt()), // Orange
+        Color(0xFFFFEB3B.toInt()), // Yellow
+        Color(0xFF4CAF50.toInt()), // Green
+        Color(0xFF2196F3.toInt()), // Blue
+        Color(0xFF9C27B0.toInt()), // Purple
+        Color(0xFF795548.toInt()), // Brown
+        Color(0xFF9E9E9E.toInt())  // Gray
     )
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = Color(0xFFF5F5F5),
+        color = Color(0xFFF5F5F5.toInt()),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
         shadowElevation = 8.dp,
         border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f))

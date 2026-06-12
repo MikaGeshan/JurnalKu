@@ -4,6 +4,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
+import com.example.jurnalku.ui.theme.safeColor
 import androidx.compose.ui.geometry.Offset
 import com.example.jurnalku.ui.components.canvas.CustomCanvas
 import com.example.jurnalku.ui.components.canvas.DrawPath
@@ -19,7 +20,7 @@ fun EditJournalScreen(
     val firstPage = pages.firstOrNull() ?: JournalPagePayload()
 
     CustomCanvas(
-        paperColor = Color(firstPage.paperColor.toULong()),
+        paperColor = safeColor(firstPage.paperColor),
         paperType = firstPage.paperType,
         initialPages = pages,
         onClose = onBack,

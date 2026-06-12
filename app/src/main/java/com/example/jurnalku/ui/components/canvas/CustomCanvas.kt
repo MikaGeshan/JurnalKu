@@ -3,7 +3,6 @@ package com.example.jurnalku.ui.components.canvas
 import CanvasPattern
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -54,10 +53,10 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.TextRange
 import com.example.jurnalku.ui.journal.list.TextSpanPayload
 import com.example.jurnalku.ui.journal.list.JournalPagePayload
 import com.example.jurnalku.ui.journal.list.DrawPathPayload
+import com.example.jurnalku.ui.theme.safeColor
 import com.example.jurnalku.ui.journal.list.DrawPointPayload
 import java.util.UUID
 import android.graphics.Matrix
@@ -135,7 +134,7 @@ private fun spansToAnnotatedString(text: String, spans: List<TextSpanPayload>): 
                                 if (span.isStrikethrough) add(TextDecoration.LineThrough)
                             }
                         ),
-                        color = Color(span.color.toInt()),
+                        color = safeColor(span.color),
                         fontSize = span.fontSize.sp,
                         fontFamily = stringToFontFamily(span.fontFamily)
                     ),
@@ -213,14 +212,14 @@ fun CustomCanvas(
         isBoldState = currentPage.isBold
         isItalicState = currentPage.isItalic
         isStrikethroughState = currentPage.isStrikethrough
-        textColorState = Color(currentPage.textColor.toInt())
+        textColorState = safeColor(currentPage.textColor)
         fontSizeState = currentPage.fontSize
 
         paths.clear()
         paths.addAll(currentPage.paths.map { payload ->
             DrawPath(
                 points = payload.points.map { Offset(it.x, it.y) },
-                color = Color(payload.color.toInt()),
+                color = safeColor(payload.color),
                 strokeWidth = payload.strokeWidth
             )
         })

@@ -47,7 +47,7 @@ fun DrawToolbar(
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = Color(0xFFF5F5F5),
+        color = Color(0xFFF5F5F5.toInt()),
         shape = RoundedCornerShape(16.dp),
         shadowElevation = 8.dp,
         border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f))
