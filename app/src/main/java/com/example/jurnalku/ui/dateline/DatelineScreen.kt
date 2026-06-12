@@ -26,7 +26,8 @@ fun DatelineScreen(
     onDateSelected: (LocalDate) -> Unit,
     moodHistory: Map<LocalDate, com.example.jurnalku.ui.entries.MoodClass>,
     activityHistory: Map<LocalDate, List<Map<String, Any>>>,
-    weeklyMoodData: List<MoodData>,
+    monthlyMoodData: List<MoodData>,
+    monthlyMoodValues: List<Int>,
     stressResult: StressResult?,
     latestBatchSize: Int,
     lastPSSDate: Long?,
@@ -99,7 +100,7 @@ fun DatelineScreen(
             item {
                 CustomCard(title = "Monthly Analysis") {
                     MoodCounter(
-                        moods = weeklyMoodData,
+                        moods = monthlyMoodData,
                         stressResult = stressResult
                     )
                 }
@@ -108,10 +109,11 @@ fun DatelineScreen(
             if (latestBatchSize >= 30) {
                 item {
                     Spacer(modifier = Modifier.height(24.dp))
-                    CustomCard(title = "Monthly Analysis") {
+                    CustomCard(title = "PSS 4 Assessment") {
                         PSSForm(
                             lastTakenDate = lastPSSDate,
                             savedScore = lastPSSScore,
+                            moodValues = monthlyMoodValues,
                             onScoreCalculated = onPSSScoreCalculated
                         )
                     }

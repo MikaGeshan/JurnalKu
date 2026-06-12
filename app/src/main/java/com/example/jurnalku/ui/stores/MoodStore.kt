@@ -30,8 +30,8 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
     private val _moodHistory = MutableStateFlow<Map<String, String>>(emptyMap())
     val moodHistory: StateFlow<Map<String, String>> = _moodHistory
 
-    private val _weeklyMoodData = MutableStateFlow<List<MoodData>>(emptyList())
-    val weeklyMoodData: StateFlow<List<MoodData>> = _weeklyMoodData
+    private val _monthlyMoodData = MutableStateFlow<List<MoodData>>(emptyList())
+    val monthlyMoodData: StateFlow<List<MoodData>> = _monthlyMoodData
 
     private val _lastPSSScore = MutableStateFlow<Int?>(null)
     val lastPSSScore: StateFlow<Int?> = _lastPSSScore
@@ -61,12 +61,15 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
         prefs.edit().putInt("press_count_$today", newCount).apply()
     }
 
-    fun calculateWeeklyStats(date: Date = Date()) {
+    private val _monthlyMoodValues = MutableStateFlow<List<Int>>(emptyList())
+    val monthlyMoodValues: StateFlow<List<Int>> = _monthlyMoodValues
+
+    fun calculateMonthlyStats(date: Date = Date()) {
         val cal = Calendar.getInstance()
         cal.time = date
 
-        // mulai dari 6 hari lalu
-        cal.add(Calendar.DATE, -6)
+        // mulai dari 29 hari lalu (total 30 hari termasuk hari ini)
+        cal.add(Calendar.DATE, -29)
 
         // normalize
         cal.set(Calendar.HOUR_OF_DAY, 0)
@@ -76,38 +79,37 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
 
         val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
-        val weeklyMoods = mutableListOf<MoodClass>()
+        val monthlyMoods = mutableListOf<MoodClass>()
 
-        repeat(7) {
+        repeat(30) {
             val dateStr = sdf.format(cal.time)
 
             _moodHistory.value[dateStr]?.let { key ->
                 MoodClass.all.find { it.key == key }?.let {
-                    weeklyMoods.add(it)
+                    monthlyMoods.add(it)
                 }
             }
 
             cal.add(Calendar.DATE, 1)
         }
 
-        val moodValues = weeklyMoods.map { it.value }
+        val moodValues = monthlyMoods.map { it.value }
 
-        // We pass null to StressCalculator so the result is based ONLY on moods.
-        // This prevents the PSS test score from "affecting" the MoodCounter display.
+        // We pass the PSS score to StressCalculator so the result combines PSS and moods.
         val result = StressCalculator.calculate(
-            null,
+            _lastPSSScore.value,
             moodValues
         )
 
-        _weeklyMoodData.value = MoodClass.all.map { mood ->
+        _monthlyMoodData.value = MoodClass.all.map { mood ->
             MoodData(
                 label = mood.key,
-                count = weeklyMoods.count { it.key == mood.key },
+                count = monthlyMoods.count { it.key == mood.key },
                 color = mood.color,
                 icon = mood.icon
             )
         }
-
+        _monthlyMoodValues.value = moodValues
         _stressResult.value = result
     }
 
@@ -119,7 +121,7 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
         } catch (_: Exception) {
             _lastPSSDate.value = System.currentTimeMillis()
         }
-        calculateWeeklyStats()
+        calculateMonthlyStats()
         savePSSScore(uid, score)
     }
 
@@ -158,7 +160,7 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
                         _lastPSSDate.value = timestampObj.toLong()
                     }
                     
-                    calculateWeeklyStats()
+                    calculateMonthlyStats()
                 }
             }
             .addOnFailureListener { Log.e("MoodStore", "Failed to fetch latest PSS", it) }
@@ -190,24 +192,16 @@ class MoodStore(application: Application) : AndroidViewModel(application) {
                     }
                 }
 
-                val latestDoc = querySnapshot.documents
-                    .sortedByDescending { doc ->
-                        val createdAt = doc.get("created_at")
-                        when (createdAt) {
-                            is String -> createdAt
-                            is Number -> createdAt.toLong().toString() // Not perfect sorting for mixed, but safe
-                            else -> ""
-                        }
+                var totalMoodsAcrossAllDocs = 0
+                querySnapshot.documents.forEach { doc ->
+                    doc.data?.filterKeys { it.startsWith("moods") }?.values?.forEach {
+                        totalMoodsAcrossAllDocs += (it as? Map<*, *>)?.size ?: 0
                     }
-                    .firstOrNull()
-                var countInLatest = 0
-                latestDoc?.data?.filterKeys { it.startsWith("moods") }?.values?.forEach {
-                    countInLatest += (it as? Map<*, *>)?.size ?: 0
                 }
-                _latestBatchSize.value = countInLatest
+                _latestBatchSize.value = totalMoodsAcrossAllDocs
 
                 _moodHistory.value = fullHistory
-                calculateWeeklyStats()
+                calculateMonthlyStats()
                 fetchLatestPSS(uid)
                 
                 val today = getTodayDate()

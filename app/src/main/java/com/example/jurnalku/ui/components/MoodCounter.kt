@@ -41,44 +41,6 @@ fun MoodCounter(
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            val safeStressResult = stressResult ?: StressResult()
-
-            Column {
-                Text(
-                    text = safeStressResult.stressLevel,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = when (safeStressResult.stressLevel) {
-                        "Stress Rendah" -> Green
-                        "Stress Sedang" -> Orange
-                        "Stress Tinggi" -> Red
-                        else -> Color.Gray
-                    }
-                )
-
-                Text(
-                    text = "Weekly summary",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
-                )
-            }
-
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = "Avg Mood: %.2f".format(safeStressResult.averageMood),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.Gray
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
         Box(
             modifier = Modifier
                 .fillMaxWidth()

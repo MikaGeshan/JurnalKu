@@ -21,7 +21,8 @@ fun DatelineContainer() {
     val moodStore: MoodStore = viewModel()
 
     val moodHistoryRaw by moodStore.moodHistory.collectAsState()
-    val weeklyMoodData by moodStore.weeklyMoodData.collectAsState()
+    val monthlyMoodData by moodStore.monthlyMoodData.collectAsState()
+    val monthlyMoodValues by moodStore.monthlyMoodValues.collectAsState()
     val lastPSSScore by moodStore.lastPSSScore.collectAsState()
     val lastPSSDate by moodStore.lastPSSDate.collectAsState()
     val stressResult by moodStore.stressResult.collectAsState()
@@ -62,7 +63,7 @@ fun DatelineContainer() {
     ) {
         if ((uid != null) && moodHistoryRaw.isNotEmpty()) {
             val date = Date.from(selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
-            moodStore.calculateWeeklyStats(date)
+            moodStore.calculateMonthlyStats(date)
         }
     }
 
@@ -83,7 +84,8 @@ fun DatelineContainer() {
         onDateSelected = { selectedDate = it },
         moodHistory = moodHistory,
         activityHistory = activityHistory,
-        weeklyMoodData = weeklyMoodData,
+        monthlyMoodData = monthlyMoodData,
+        monthlyMoodValues = monthlyMoodValues,
         stressResult = stressResult,
         latestBatchSize = latestBatchSize,
         lastPSSDate = lastPSSDate,
