@@ -5,6 +5,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.jurnalku.ui.entries.MoodClass
 import com.example.jurnalku.ui.stores.AuthStore
 import com.example.jurnalku.ui.stores.MoodStore
+import com.google.firebase.firestore.FirebaseFirestore
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeParseException
@@ -27,8 +28,31 @@ fun DatelineContainer() {
     val latestBatchSize by moodStore.latestBatchSize.collectAsState()
     val isLoading by moodStore.isLoading.collectAsState()
 
+    var activityHistory by remember { mutableStateOf<Map<LocalDate, List<Map<String, Any>>>>(emptyMap()) }
+
     LaunchedEffect(uid) {
-        uid?.let { moodStore.fetchTodayMood(it) }
+        if (uid != null) {
+            moodStore.fetchTodayMood(uid)
+            
+            // fetch activity log for unified history details
+            FirebaseFirestore.getInstance()
+                .collection("activity_log")
+                .whereEqualTo("uid", uid)
+                .get()
+                .addOnSuccessListener { result ->
+                    val history = result.documents.mapNotNull { doc ->
+                        val dateStr = doc.getString("date")
+                        val activities = doc.get("activities") as? List<Map<String, Any>>
+                        try {
+                            val date = LocalDate.parse(dateStr)
+                            if (activities != null) date to activities else null
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }.toMap()
+                    activityHistory = history
+                }
+        }
     }
 
     LaunchedEffect(
@@ -46,8 +70,8 @@ fun DatelineContainer() {
         moodHistoryRaw.mapNotNull { (dateStr, moodKey) ->
             try {
                 val date = LocalDate.parse(dateStr)
-                val moodIcon = MoodClass.all.find { it.key == moodKey }?.icon
-                moodIcon?.let { date to it }
+                val mood = MoodClass.all.find { it.key == moodKey }
+                mood?.let { date to it }
             } catch (e: DateTimeParseException) {
                 null
             }
@@ -58,6 +82,7 @@ fun DatelineContainer() {
         selectedDate = selectedDate,
         onDateSelected = { selectedDate = it },
         moodHistory = moodHistory,
+        activityHistory = activityHistory,
         weeklyMoodData = weeklyMoodData,
         stressResult = stressResult,
         latestBatchSize = latestBatchSize,

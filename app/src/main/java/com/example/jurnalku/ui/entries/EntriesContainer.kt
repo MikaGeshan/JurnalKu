@@ -120,23 +120,24 @@ fun EntriesContainer(
 
     fun handleDeleteJournal(
         journalId: String,
+        journalName: String, // Added journalName
         onSuccess: () -> Unit,
         onError: (Exception) -> Unit
     ) {
         isLoading = true
-
-        FirebaseFirestore.getInstance()
-            .collection("journals")
-            .document(journalId)
-            .delete()
-            .addOnSuccessListener {
+        repository.deleteJournal(
+            uid = getUserUid,
+            journalId = journalId,
+            journalName = journalName,
+            onSuccess = {
                 isLoading = false
                 onSuccess()
-            }
-            .addOnFailureListener {
+            },
+            onError = {
                 isLoading = false
                 onError(it)
             }
+        )
     }
 
     fun handleLogout() {

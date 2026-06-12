@@ -55,6 +55,7 @@ fun EntriesScreen(
     ) -> Unit,
     onDeleteJournal: (
         String,
+        String,
         () -> Unit,
         (Exception) -> Unit
     ) -> Unit,
@@ -70,7 +71,7 @@ fun EntriesScreen(
     }
 
     var isSelectionMode by remember { mutableStateOf(false) }
-    var selectedIds by remember { mutableStateOf(setOf<String>()) }
+    var selectedIds by remember { mutableStateOf(setOf<Pair<String, String>>()) }
     var refreshTrigger by remember { mutableStateOf(0) }
 
     var showConfetti by remember { mutableStateOf(false) }
@@ -158,8 +159,8 @@ fun EntriesScreen(
                             } else {
                                 var deletedCount = 0
                                 val totalToDelete = selectedIds.size
-                                selectedIds.forEach { id ->
-                                    onDeleteJournal(id, {
+                                selectedIds.forEach { (id, journalName) ->
+                                    onDeleteJournal(id, journalName, {
                                         deletedCount++
                                         if (deletedCount == totalToDelete) {
                                             isSelectionMode = false
@@ -276,7 +277,7 @@ fun EntriesScreen(
             items(journals) { journalEntry ->
 
                 val journal = journalEntry.payload
-                val isSelected = selectedIds.contains(journalEntry.journalId)
+                val isSelected = selectedIds.any { it.first == journalEntry.journalId }
 
                 Box(
                     modifier = Modifier
@@ -287,9 +288,9 @@ fun EntriesScreen(
                         .clickable {
                             if (isSelectionMode) {
                                 if (isSelected) {
-                                    selectedIds = selectedIds - journalEntry.journalId
+                                    selectedIds = selectedIds.filter { it.first != journalEntry.journalId }.toSet()
                                 } else {
-                                    selectedIds = selectedIds + journalEntry.journalId
+                                    selectedIds = selectedIds + (journalEntry.journalId to journalEntry.journalName)
                                 }
                             } else {
                                 onEditJournal(journalEntry)

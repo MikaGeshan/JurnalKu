@@ -64,7 +64,9 @@ fun EditJournalContainer(
     fun handleSave(updatedPages: List<JournalPagePayload>) {
         val uid = user?.uid ?: return
         repository.updateJournal(
+            uid = uid,
             journalId = journalId,
+            journalName = journalName,
             pages = updatedPages,
             onSuccess = {
                 // Update recent page info when saving

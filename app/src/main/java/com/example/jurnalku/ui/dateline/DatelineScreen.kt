@@ -24,7 +24,8 @@ import java.time.LocalDate
 fun DatelineScreen(
     selectedDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
-    moodHistory: Map<LocalDate, AppIconClass>,
+    moodHistory: Map<LocalDate, com.example.jurnalku.ui.entries.MoodClass>,
+    activityHistory: Map<LocalDate, List<Map<String, Any>>>,
     weeklyMoodData: List<MoodData>,
     stressResult: StressResult?,
     latestBatchSize: Int,
@@ -42,39 +43,40 @@ fun DatelineScreen(
                 .fillMaxSize()
                 .padding(horizontal = 16.dp),
         ) {
-        item {
-            Spacer(modifier = Modifier.height(24.dp))
-            Column {
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                Column {
+                    Text(
+                        text = "Your Journey",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.width(60.dp).padding(top = 4.dp),
+                        thickness = 4.dp,
+                        color = JungleGreen.copy(alpha = 0.5f)
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Your Journey",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
+                    text = "Tracking your moods and growth",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                 )
-                HorizontalDivider(
-                    modifier = Modifier.width(60.dp).padding(top = 4.dp),
-                    thickness = 4.dp,
-                    color = JungleGreen.copy(alpha = 0.5f)
-                )
+                Spacer(modifier = Modifier.height(24.dp))
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Tracking your moods and growth",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-        }
 
-        item {
-            CustomCard(title = "Calendar") {
-                Calendar(
-                    selectedDate = selectedDate,
-                    onDateSelected = onDateSelected,
-                    moodHistory = moodHistory
-                )
+            item {
+                CustomCard(title = "Calendar") {
+                    Calendar(
+                        selectedDate = selectedDate,
+                        onDateSelected = onDateSelected,
+                        moodHistory = moodHistory,
+                        activityHistory = activityHistory
+                    )
+                }
             }
-        }
 
             item {
                 Spacer(modifier = Modifier.height(24.dp))
@@ -94,35 +96,35 @@ fun DatelineScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
 
-        item {
-            CustomCard(title = "Monthly Analysis") {
-                MoodCounter(
-                    moods = weeklyMoodData,
-                    stressResult = stressResult
-                )
-            }
-        }
-
-        if (latestBatchSize >= 30) {
             item {
-                Spacer(modifier = Modifier.height(24.dp))
                 CustomCard(title = "Monthly Analysis") {
-                    PSSForm(
-                        lastTakenDate = lastPSSDate,
-                        savedScore = lastPSSScore,
-                        onScoreCalculated = onPSSScoreCalculated
+                    MoodCounter(
+                        moods = weeklyMoodData,
+                        stressResult = stressResult
                     )
                 }
             }
-        }
-        
-        item {
-            Spacer(modifier = Modifier.height(120.dp))
-        }
-    }
 
-    if (isLoading) {
-        CustomLoadingSpinner(isOverlay = true)
-    }
+            if (latestBatchSize >= 30) {
+                item {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    CustomCard(title = "Monthly Analysis") {
+                        PSSForm(
+                            lastTakenDate = lastPSSDate,
+                            savedScore = lastPSSScore,
+                            onScoreCalculated = onPSSScoreCalculated
+                        )
+                    }
+                }
+            }
+            
+            item {
+                Spacer(modifier = Modifier.height(120.dp))
+            }
+        }
+
+        if (isLoading) {
+            CustomLoadingSpinner(isOverlay = true)
+        }
     }
 }
