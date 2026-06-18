@@ -32,7 +32,8 @@ fun CanvasHeader(
     onRedo: () -> Unit,
     canUndo: Boolean,
     canRedo: Boolean,
-    onExportJournal: () -> Unit,
+    onExportPDF: () -> Unit,
+    onExportJPG: () -> Unit,
     onSave: () -> Unit,
     onCreateNewPage: () -> Unit,
     onPickImage: () -> Unit
@@ -108,10 +109,17 @@ fun CanvasHeader(
                     onDismissRequest = { showMenu = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Export") },
+                        text = { Text("Export as PDF") },
                         onClick = {
                             showMenu = false
-                            onExportJournal()
+                            onExportPDF()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Export as JPG") },
+                        onClick = {
+                            showMenu = false
+                            onExportJPG()
                         }
                     )
                     DropdownMenuItem(

@@ -29,7 +29,6 @@ import android.util.Base64
 import java.io.ByteArrayOutputStream
 import androidx.compose.ui.platform.LocalContext
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
@@ -48,11 +47,16 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.input.TextFieldValue
+import com.example.jurnalku.ui.journal.list.JournalImagePayload
 import com.example.jurnalku.ui.journal.list.TextSpanPayload
 import com.example.jurnalku.ui.journal.list.JournalPagePayload
 import com.example.jurnalku.ui.journal.list.DrawPathPayload
@@ -72,6 +76,15 @@ import android.text.StaticLayout
 import android.text.Layout
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.platform.LocalDensity
+
+data class CanvasImage(
+    val id: String = UUID.randomUUID().toString(),
+    val base64: String,
+    var offsetX: Float = 0f,
+    var offsetY: Float = 0f,
+    var scale: Float = 1f,
+    var rotation: Float = 0f
+)
 
 val defaultColor = Color.Black
 
@@ -176,10 +189,11 @@ fun CustomCanvas(
     // State for current page
     var mode by remember { mutableStateOf(CanvasMode.TEXT) }
     var textFieldValue by remember { mutableStateOf(TextFieldValue("")) }
-    var selectedImageBase64 by remember { mutableStateOf<String?>(null) }
-    var imageOffset by remember { mutableStateOf(Offset.Zero) }
-    var imageScale by remember { mutableStateOf(1f) }
-    var imageRotation by remember { mutableStateOf(0f) }
+    
+    // Multiple Images State
+    val canvasImages = remember { mutableStateListOf<CanvasImage>() }
+    var selectedImageId by remember { mutableStateOf<String?>(null) }
+    
     val paths = remember { mutableStateListOf<DrawPath>() }
     val undonePaths = remember { mutableStateListOf<DrawPath>() }
 
@@ -200,10 +214,13 @@ fun CustomCanvas(
         textFieldValue = TextFieldValue(
             annotatedString = spansToAnnotatedString(currentPage.text, currentPage.spans)
         )
-        selectedImageBase64 = currentPage.imageBase64
-        imageOffset = Offset(currentPage.imageOffsetX, currentPage.imageOffsetY)
-        imageScale = currentPage.imageScale
-        imageRotation = currentPage.imageRotation
+        
+        // Load Images
+        canvasImages.clear()
+        canvasImages.addAll(currentPage.images.map { 
+            CanvasImage(it.id, it.base64, it.offsetX, it.offsetY, it.scale, it.rotation) 
+        })
+        selectedImageId = null
         
         // Load text effects
         fontFamilyState = stringToFontFamily(currentPage.fontFamily)
@@ -232,11 +249,9 @@ fun CustomCanvas(
         pages[currentPageIndex] = pages[currentPageIndex].copy(
             text = textFieldValue.text,
             spans = currentSpans,
-            imageBase64 = selectedImageBase64,
-            imageOffsetX = imageOffset.x,
-            imageOffsetY = imageOffset.y,
-            imageScale = imageScale,
-            imageRotation = imageRotation,
+            images = canvasImages.map { 
+                JournalImagePayload(it.id, it.base64, it.offsetX, it.offsetY, it.scale, it.rotation) 
+            },
             // Save text effects
             fontFamily = fontFamilyToString(fontFamilyState),
             textAlign = textAlignToString(textAlignState),
@@ -310,10 +325,10 @@ fun CustomCanvas(
             }
         }
 
-        // 3. Image
-        selectedImageBase64?.let { base64 ->
+        // 3. Images
+        canvasImages.forEach { canvasImage ->
             try {
-                val bytes = Base64.decode(base64, Base64.DEFAULT)
+                val bytes = Base64.decode(canvasImage.base64, Base64.DEFAULT)
                 val imgBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
                 if (imgBitmap != null) {
                     val matrix = Matrix()
@@ -326,9 +341,9 @@ fun CustomCanvas(
                     val centerY = canvasSize.height / 2f
 
                     matrix.postTranslate(-imgBitmap.width / 2f, -imgBitmap.height / 2f)
-                    matrix.postScale(baseScale * imageScale, baseScale * imageScale)
-                    matrix.postRotate(imageRotation)
-                    matrix.postTranslate(centerX + imageOffset.x, centerY + imageOffset.y)
+                    matrix.postScale(baseScale * canvasImage.scale, baseScale * canvasImage.scale)
+                    matrix.postRotate(canvasImage.rotation)
+                    matrix.postTranslate(centerX + canvasImage.offsetX, centerY + canvasImage.offsetY)
 
                     canvas.drawBitmap(imgBitmap, matrix, Paint().apply { isAntiAlias = true })
                 }
@@ -443,71 +458,77 @@ fun CustomCanvas(
         }
     }
 
-    fun exportPage() {
+    fun exportPage(format: String) {
         if (canvasSize.width == 0 || canvasSize.height == 0) return
 
         val fileNameBase = "Journal_${UUID.randomUUID()}"
 
-        // --- Export to JPG ---
-        val bitmap = Bitmap.createBitmap(canvasSize.width, canvasSize.height, Bitmap.Config.ARGB_8888)
-        val bitmapCanvas = android.graphics.Canvas(bitmap)
-        drawFullContent(bitmapCanvas)
+        if (format == "JPG") {
+            // --- Export to JPG ---
+            val bitmap = Bitmap.createBitmap(canvasSize.width, canvasSize.height, Bitmap.Config.ARGB_8888)
+            val bitmapCanvas = android.graphics.Canvas(bitmap)
+            drawFullContent(bitmapCanvas)
 
-        try {
-            val contentValues = ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, "$fileNameBase.jpg")
-                put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
-            }
-
-            val uri = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-            uri?.let {
-                context.contentResolver.openOutputStream(it)?.use { outputStream ->
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream)
+            try {
+                val contentValues = ContentValues().apply {
+                    put(MediaStore.MediaColumns.DISPLAY_NAME, "$fileNameBase.jpg")
+                    put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+                    put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
                 }
-            }
-        } catch (e: Exception) {
-            Log.e("EXPORT_ERROR", "Failed to save JPG", e)
-        }
 
-        // --- Export to PDF ---
-        val pdfDocument = PdfDocument()
-        val pageInfo = PdfDocument.PageInfo.Builder(canvasSize.width, canvasSize.height, 1).create()
-        val page = pdfDocument.startPage(pageInfo)
-        
-        drawFullContent(page.canvas)
-        
-        pdfDocument.finishPage(page)
-
-        try {
-            val contentValues = ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, "$fileNameBase.pdf")
-                put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
-                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS)
-            }
-
-            val uri = context.contentResolver.insert(MediaStore.Files.getContentUri("external"), contentValues)
-            uri?.let {
-                context.contentResolver.openOutputStream(it)?.use { outputStream ->
-                    pdfDocument.writeTo(outputStream)
+                val uri = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+                uri?.let {
+                    context.contentResolver.openOutputStream(it)?.use { outputStream ->
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream)
+                    }
                 }
+                Toast.makeText(context, "Page exported as JPG", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Log.e("EXPORT_ERROR", "Failed to save JPG", e)
+                Toast.makeText(context, "JPG Export failed", Toast.LENGTH_SHORT).show()
             }
-            Toast.makeText(context, "Page exported as JPG and PDF", Toast.LENGTH_SHORT).show()
-        } catch (e: Exception) {
-            Log.e("EXPORT_ERROR", "Failed to save PDF", e)
-            Toast.makeText(context, "Export failed", Toast.LENGTH_SHORT).show()
-        } finally {
-            pdfDocument.close()
+        } else if (format == "PDF") {
+            // --- Export to PDF ---
+            val pdfDocument = PdfDocument()
+            val pageInfo = PdfDocument.PageInfo.Builder(canvasSize.width, canvasSize.height, 1).create()
+            val page = pdfDocument.startPage(pageInfo)
+            
+            drawFullContent(page.canvas)
+            
+            pdfDocument.finishPage(page)
+
+            try {
+                val contentValues = ContentValues().apply {
+                    put(MediaStore.MediaColumns.DISPLAY_NAME, "$fileNameBase.pdf")
+                    put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
+                    put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS)
+                }
+
+                val uri = context.contentResolver.insert(MediaStore.Files.getContentUri("external"), contentValues)
+                uri?.let {
+                    context.contentResolver.openOutputStream(it)?.use { outputStream ->
+                        pdfDocument.writeTo(outputStream)
+                    }
+                }
+                Toast.makeText(context, "Page exported as PDF", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Log.e("EXPORT_ERROR", "Failed to save PDF", e)
+                Toast.makeText(context, "PDF Export failed", Toast.LENGTH_SHORT).show()
+            } finally {
+                pdfDocument.close()
+            }
         }
     }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia(),
+        contract = ActivityResultContracts.GetContent(),
         onResult = { uri -> 
             if (uri != null) {
                 val base64 = uriToBase64(context, uri)
                 if (base64 != null) {
-                    selectedImageBase64 = base64
+                    val newImage = CanvasImage(base64 = base64)
+                    canvasImages.add(newImage)
+                    selectedImageId = newImage.id
                     mode = CanvasMode.IMAGE
                 }
             }
@@ -537,6 +558,14 @@ fun CustomCanvas(
     fun handleClearAll() {
         paths.clear()
         undonePaths.clear()
+    }
+
+    fun handleDeleteImage() {
+        selectedImageId?.let { id ->
+            canvasImages.removeAll { it.id == id }
+            selectedImageId = null
+            mode = CanvasMode.TEXT
+        }
     }
 
     fun handleSaveJournal() {
@@ -581,12 +610,16 @@ fun CustomCanvas(
                 onRedo = ::handleRedo,
                 canUndo = paths.isNotEmpty(),
                 canRedo = undonePaths.isNotEmpty(),
-                onExportJournal = ::exportPage,
+                onExportPDF = { exportPage("PDF") },
+                onExportJPG = { exportPage("JPG") },
                 onSave = ::handleSaveJournal,
                 onPickImage = {
-                    photoPickerLauncher.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                    )
+                    try {
+                        photoPickerLauncher.launch("image/*")
+                    } catch (e: Exception) {
+                        Log.e("IMAGE_ERROR", "Failed to launch picker", e)
+                        Toast.makeText(context, "No image picker found", Toast.LENGTH_SHORT).show()
+                    }
                 },
                 onCreateNewPage = ::handleCreateNewPage,
             )
@@ -736,11 +769,11 @@ fun CustomCanvas(
                         )
                     )
 
-                    // image layer - moved above TextField to catch touches
-                    selectedImageBase64?.let { base64String ->
-                        val imageBytes = remember(base64String) {
+                    // image layer
+                    canvasImages.forEach { canvasImage ->
+                        val imageBytes = remember(canvasImage.base64) {
                             try {
-                                Base64.decode(base64String, Base64.DEFAULT)
+                                Base64.decode(canvasImage.base64, Base64.DEFAULT)
                             } catch (e: Exception) {
                                 null
                             }
@@ -753,16 +786,17 @@ fun CustomCanvas(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .graphicsLayer(
-                                        translationX = imageOffset.x,
-                                        translationY = imageOffset.y,
-                                        scaleX = imageScale,
-                                        scaleY = imageScale,
-                                        rotationZ = imageRotation
+                                        translationX = canvasImage.offsetX,
+                                        translationY = canvasImage.offsetY,
+                                        scaleX = canvasImage.scale,
+                                        scaleY = canvasImage.scale,
+                                        rotationZ = canvasImage.rotation
                                     )
                                     .then(
                                         if (mode == CanvasMode.TEXT) {
-                                            Modifier.pointerInput(Unit) {
+                                            Modifier.pointerInput(canvasImage.id) {
                                                 detectTapGestures {
+                                                    selectedImageId = canvasImage.id
                                                     mode = CanvasMode.IMAGE
                                                 }
                                             }
@@ -783,35 +817,35 @@ fun CustomCanvas(
                     )
 
                     // Image transformation overlay
-                    if (mode == CanvasMode.IMAGE) {
+                    if (mode == CanvasMode.IMAGE && selectedImageId != null) {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .pointerInput(Unit) {
                                     detectTapGestures {
+                                        selectedImageId = null
                                         mode = CanvasMode.TEXT
                                     }
                                 }
-                                .pointerInput(Unit) {
+                                .pointerInput(selectedImageId) {
                                     detectTransformGestures { _, pan, zoom, rotation ->
-                                        // Constrain Scale
-                                        imageScale = (imageScale * zoom).coerceIn(0.2f, 8f)
-
-                                        // Apply Rotation
-                                        imageRotation += rotation
-
-                                        // Apply Pan with boundaries
-                                        val newOffset = imageOffset + pan
-
-                                        // Allow moving the image center up to its own scaled size away from canvas center
-                                        // This keeps at least a part of the image visible
-                                        val boundX = canvasSize.width.toFloat()
-                                        val boundY = canvasSize.height.toFloat()
-
-                                        imageOffset = Offset(
-                                            x = newOffset.x.coerceIn(-boundX, boundX),
-                                            y = newOffset.y.coerceIn(-boundY, boundY)
-                                        )
+                                        val index = canvasImages.indexOfFirst { it.id == selectedImageId }
+                                        if (index != -1) {
+                                            val img = canvasImages[index]
+                                            val newScale = (img.scale * zoom).coerceIn(0.2f, 8f)
+                                            val newRotation = img.rotation + rotation
+                                            val newOffset = Offset(
+                                                x = (img.offsetX + pan.x).coerceIn(-canvasSize.width.toFloat(), canvasSize.width.toFloat()),
+                                                y = (img.offsetY + pan.y).coerceIn(-canvasSize.height.toFloat(), canvasSize.height.toFloat())
+                                            )
+                                            
+                                            canvasImages[index] = img.copy(
+                                                scale = newScale,
+                                                rotation = newRotation,
+                                                offsetX = newOffset.x,
+                                                offsetY = newOffset.y
+                                            )
+                                        }
                                     }
                                 }
                         )
@@ -843,6 +877,39 @@ fun CustomCanvas(
                     },
                     onClearAll = ::handleClearAll
                 )
+            }
+
+            // toolbar image
+            if (mode == CanvasMode.IMAGE) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color(0xFFF5F5F5.toInt()),
+                    shape = RoundedCornerShape(16.dp),
+                    shadowElevation = 8.dp,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f))
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .padding(12.dp)
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color.White,
+                            modifier = Modifier
+                                .clickable { handleDeleteImage() }
+                        ) {
+                            Text(
+                                text = "Delete Image",
+                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                                color = Color.Red,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                }
             }
 
             // toolbar text

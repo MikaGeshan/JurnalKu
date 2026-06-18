@@ -86,10 +86,10 @@ fun PagePreview(
         }
 
         // 2. Image Layer (Compressed for preview)
-        recentPage.imageBase64?.let { base64String ->
-            val imageBytes = remember(base64String) {
+        recentPage.images.forEach { imagePayload ->
+            val imageBytes = remember(imagePayload.base64) {
                 try {
-                    Base64.decode(base64String, Base64.DEFAULT)
+                    Base64.decode(imagePayload.base64, Base64.DEFAULT)
                 } catch (_: Exception) {
                     null
                 }
@@ -103,11 +103,11 @@ fun PagePreview(
                         .graphicsLayer {
                             // Scale down original transforms for preview
                             // Since the box is roughly 1/3 of the screen, we scale offsets
-                            translationX = recentPage.imageOffsetX * 0.3f
-                            translationY = recentPage.imageOffsetY * 0.3f
-                            scaleX = recentPage.imageScale
-                            scaleY = recentPage.imageScale
-                            rotationZ = recentPage.imageRotation
+                            translationX = imagePayload.offsetX * 0.3f
+                            translationY = imagePayload.offsetY * 0.3f
+                            scaleX = imagePayload.scale
+                            scaleY = imagePayload.scale
+                            rotationZ = imagePayload.rotation
                         },
                     contentScale = ContentScale.Fit,
                     alpha = 0.8f // Slightly fade for preview style

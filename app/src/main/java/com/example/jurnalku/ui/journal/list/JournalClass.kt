@@ -20,17 +20,22 @@ data class TextSpanPayload(
     val fontFamily: String = "Default"
 )
 
+data class JournalImagePayload(
+    val id: String = "",
+    val base64: String = "",
+    val offsetX: Float = 0f,
+    val offsetY: Float = 0f,
+    val scale: Float = 1f,
+    val rotation: Float = 0f
+)
+
 data class JournalPagePayload(
     val contentId: String = "",
     val text: String = "",
     val paperType: String = "",
     val paperColor: Long = 0xFFFFFFFF,
     val paths: List<DrawPathPayload> = emptyList(),
-    val imageBase64: String? = null,
-    val imageOffsetX: Float = 0f,
-    val imageOffsetY: Float = 0f,
-    val imageScale: Float = 1f,
-    val imageRotation: Float = 0f,
+    val images: List<JournalImagePayload> = emptyList(),
     val fontFamily: String = "Default",
     val textAlign: String = "Left",
     val isUnderlined: Boolean = false,
@@ -61,11 +66,7 @@ data class RecentPageEntry(
     val paperColor: Long = 0xFFFFFFFF,
     val text: String = "",
     val paths: List<DrawPathPayload> = emptyList(),
-    val imageBase64: String? = null,
-    val imageOffsetX: Float = 0f,
-    val imageOffsetY: Float = 0f,
-    val imageScale: Float = 1f,
-    val imageRotation: Float = 0f,
+    val images: List<JournalImagePayload> = emptyList(),
     val fontFamily: String = "Default",
     val textAlign: String = "Left",
     val isUnderlined: Boolean = false,
@@ -87,11 +88,7 @@ fun JournalPagePayload.toRecentPageEntry(journalId: String, journalName: String,
         paperColor = this.paperColor,
         text = this.text,
         paths = this.paths,
-        imageBase64 = this.imageBase64,
-        imageOffsetX = this.imageOffsetX,
-        imageOffsetY = this.imageOffsetY,
-        imageScale = this.imageScale,
-        imageRotation = this.imageRotation,
+        images = this.images,
         fontFamily = this.fontFamily,
         textAlign = this.textAlign,
         isUnderlined = this.isUnderlined,
